@@ -1,0 +1,35 @@
+# =============================================================================
+# Agent Zero - Docker Desktop Development Configuration
+# =============================================================================
+# Uses the official pre-built Agent Zero image for fast deployment.
+# No build required - just pull and run!
+#
+# Usage:
+#   docker-compose up -d              # Start in background
+#   docker-compose logs -f agent-zero # View logs
+#   docker-compose down               # Stop and remove containers
+# =============================================================================
+
+services:
+  agent-zero:
+    container_name: agent-zero
+    image: agent0ai/agent-zero:latest
+    restart: unless-stopped
+
+    # Port Mappings
+    # - 50001: Main Web UI
+    ports:
+      - "50001:80"
+
+    # Volume Mounts for Data Persistence
+    volumes:
+      - agent-zero-data:/a0
+
+    # Environment Configuration
+    environment:
+      - TZ=America/New_York
+
+# Named Volumes for Data Persistence
+volumes:
+  agent-zero-data:
+    driver: local

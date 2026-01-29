@@ -1,0 +1,115 @@
+# =============================================================================
+# Agent Zero - Docker Swarm Production Configuration
+# =============================================================================
+# Uses the official pre-built Agent Zero image for production deployment
+# on the Tallman Docker Swarm cluster.
+#
+# Deployment:
+#   1. Copy to /var/data/config/docker-compose-agentzero.yaml
+#   2. Create data directories: mkdir -p /var/data/agentzero/{data,logs}
+#   3. Deploy: make deploy STACK=agentzero
+#   4. Configure DNS: agentzero.swarm.tallmanequipment.com -> 10.10.20.65
+#
+# Management:
+#   - Update: make update STACK=agentzero
+#   - Remove: make destroy STACK=agentzero
+#   - Logs:   docker service logs agentzero_agent-zero
+# =============================================================================
+
+networks:
+  # Dedicated Traefik network for this stack (Network Isolation Protocol)
+  agentzero_traefik:
+    driver: overlay
+    attachable: true
+
+  # Internal network for inter-container communication
+  agentzero_internal:
+    driver: overlay
+    attachable: true
+
+services:
+  agent-zero:
+    image: agent0ai/agent-zero:latest
+
+    # Network Configuration (Dual-Network Architecture)
+    networks:
+      - agentzero_traefik # For Traefik routing
+      - agentzero_internal # For internal services
+
+    # NFS Volume Mounts (Shared Persistence)
+    # All data resides on /var/data for cross-node portability
+    volumes:
+      - /var/data/agentzero/data:/a0
+
+    # Environment Configuration
+    environment:
+      - TZ=America/New_York
+
+    # Swarm Deployment Configuration
+    deploy:
+      mode: replicated
+      replicas: 1
+
+      # Rolling Update Strategy
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        monitor: 60s
+        order: start-first
+
+      # Rollback Configuration
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+
+      # Restart Policy
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 120s
+
+      # Resource Limits
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+
+      # Placement Constraints
+      placement:
+        constraints:
+          - node.role == manager
+
+      # Traefik Labels for Automatic Routing
+      labels:
+        # Enable Traefik routing
+        - "traefik.enable=true"
+
+        # Router Configuration
+        - "traefik.http.routers.agentzero.rule=Host(`agentzero.swarm.tallmanequipment.com`)"
+        - "traefik.http.routers.agentzero.entrypoints=https"
+        - "traefik.http.routers.agentzero.tls.certresolver=letsencrypt"
+
+        # Service Configuration
+        - "traefik.http.services.agentzero.loadbalancer.server.port=80"
+        - "traefik.http.services.agentzero.loadbalancer.sticky.cookie=true"
+        - "traefik.http.services.agentzero.loadbalancer.sticky.cookie.name=agentzero_session"
+
+        # Network for Traefik Communication
+        - "traefik.docker.network=agentzero_agentzero_traefik"
+
+        # Health Check
+        - "traefik.http.services.agentzero.loadbalancer.healthcheck.path=/"
+        - "traefik.http.services.agentzero.loadbalancer.healthcheck.interval=30s"
+
+    # Container Health Check
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:80/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

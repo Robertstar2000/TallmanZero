@@ -124,6 +124,59 @@ docker run -p 50001:80 agent0ai/agent-zero
 # Visit http://localhost:50001 to start
 ```
 
+## 🚀 Verified Deployment Paths
+
+Agent Zero supports dual deployment configurations for both development and production environments.
+
+### Master Registry
+
+**Repository**: https://github.com/agent0ai/agent-zero
+
+### Deployment Options
+
+| Path | Configuration | Use Case |
+|------|---------------|----------|
+| **Docker Desktop** | `docker-compose.yml` | Local development, testing |
+| **Docker Swarm** | `docker-compose-swarm.yml` | Production (Tallman cluster) |
+
+### Docker Desktop (Development)
+
+```bash
+# Build and run locally
+docker-compose up --build
+
+# Access at http://localhost:50001
+```
+
+### Docker Swarm (Production)
+
+```bash
+# Deploy to Tallman Swarm cluster
+ssh 10.10.20.36
+cd /var/data/config
+make deploy STACK=agentzero
+
+# Access at https://agentzero.swarm.tallmanequipment.com
+```
+
+### Persistence Compliance
+
+| Environment | Storage | Path |
+|-------------|---------|------|
+| Docker Desktop | Local volumes | `agent-zero-data` |
+| Docker Swarm | NFS shared storage | `/var/data/agentzero/` |
+
+### Network Access Points
+
+| Environment | Web UI | Management |
+|-------------|--------|------------|
+| **Desktop** | http://localhost:50001 | - |
+| **Swarm** | https://agentzero.swarm.tallmanequipment.com | https://portainer.swarm.tallmanequipment.com |
+
+📖 **Full deployment documentation**: [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+📖 **Swarm platform documentation**: [swarm.md](./swarm.md)
+
 ## 🐳 Fully Dockerized, with Speech-to-Text and TTS
 
 ![Settings](docs/res/settings-page-ui.png)
@@ -162,6 +215,8 @@ docker run -p 50001:80 agent0ai/agent-zero
 | [Architecture](./docs/architecture.md) | System design and components |
 | [Contributing](./docs/contribution.md) | How to contribute |
 | [Troubleshooting](./docs/troubleshooting.md) | Common issues and their solutions |
+| [Deployment](./DEPLOYMENT.md) | Docker Desktop & Swarm deployment guide |
+| [Swarm Platform](./swarm.md) | Docker Swarm cluster documentation |
 
 
 ## 🎯 Changelog
