@@ -25,9 +25,9 @@ services:
     # Volume Mounts for Data Persistence & Hot Reloading
     volumes:
       - agent-zero-data:/a0
-      - ./prompts:/git/agent-zero/prompts
-      - ./webui:/git/agent-zero/webui
-      - ./python:/git/agent-zero/python
+      - ./prompts:/a0/prompts
+      - ./webui:/a0/webui
+      - ./python:/a0/python
 
     # Environment Configuration
     environment:
