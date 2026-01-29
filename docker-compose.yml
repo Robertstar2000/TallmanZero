@@ -22,9 +22,12 @@ services:
     ports:
       - "50001:80"
 
-    # Volume Mounts for Data Persistence
+    # Volume Mounts for Data Persistence & Hot Reloading
     volumes:
       - agent-zero-data:/a0
+      - ./prompts:/git/agent-zero/prompts
+      - ./webui:/git/agent-zero/webui
+      - ./python:/git/agent-zero/python
 
     # Environment Configuration
     environment:
