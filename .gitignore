@@ -1,19 +1,26 @@
 # Ignore common unwanted files globally
 **/.DS_Store
 **/.env
+**/.env.*
 **/__pycache__/
 *.py[cod]
 **/.conda/
+*.log
 
-#Ignore IDE files
+# Ignore IDE files
 .cursor/
 .windsurf/
+.vscode/
+.idea/
 
 # ignore test files in root dir
 /*.test.py
 
 # Ignore all contents of the virtual environment directory
 .venv/
+env/
+venv/
+node_modules/
 
 # Handle memory directory
 memory/**
@@ -46,3 +53,6 @@ instruments/**
 # for browser-use
 agent_history.gif
 
+# Docker data volumes
+agent-zero-data/
+docker/data/
