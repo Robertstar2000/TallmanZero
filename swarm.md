@@ -1,4 +1,4 @@
-# Tallman Chat Swarm Platform
+# TallmanZero Swarm Platform
 
 ## Table of Contents
 

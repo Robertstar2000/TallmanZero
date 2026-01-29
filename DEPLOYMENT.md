@@ -1,4 +1,4 @@
-# Agent Zero - Deployment Guide
+# TallmanZero - Deployment Guide
 
 ## Table of Contents
 
@@ -13,7 +13,7 @@
 
 ## Overview
 
-Agent Zero uses the official pre-built Docker image `agent0ai/agent-zero:latest` for both development and production deployments. No building required!
+TallmanZero uses the official pre-built Docker image `agent0ai/agent-zero:latest` for both development and production deployments. No building required!
 
 ### Deployment Options
 
@@ -35,7 +35,7 @@ Agent Zero uses the official pre-built Docker image `agent0ai/agent-zero:latest`
 ### Docker Desktop (One Command!)
 
 ```powershell
-# Pull and run Agent Zero
+# Pull and run TallmanZero
 docker run -d -p 50001:80 -v agent-zero-data:/a0 --name agent-zero agent0ai/agent-zero:latest
 
 # Open in browser
@@ -70,7 +70,7 @@ make deploy STACK=agentzero
    cd C:\Users\rober\TallmanAgentZero\agent-zero
    ```
 
-2. **Start Agent Zero:**
+2. **Start TallmanZero:**
 
    ```powershell
    docker-compose up -d
@@ -333,7 +333,7 @@ sudo mount -a
 
 | Service | URL |
 |---------|-----|
-| Agent Zero | https://agentzero.swarm.tallmanequipment.com |
+| TallmanZero | https://agentzero.swarm.tallmanequipment.com |
 | Traefik Dashboard | https://traefik.swarm.tallmanequipment.com |
 | Portainer | https://portainer.swarm.tallmanequipment.com |
 
@@ -342,7 +342,7 @@ sudo mount -a
 ## Related Documentation
 
 - [Swarm Platform Guide](./swarm.md) - Full Docker Swarm platform documentation
-- [Agent Zero Docs](./docs/README.md) - Application usage and development
+- [TallmanZero Docs](./docs/README.md) - Application usage and development
 - [Enterprise Skills](./.agent/skills/enterprise-app-foundation/SKILL.md) - Architecture patterns
 
 ---

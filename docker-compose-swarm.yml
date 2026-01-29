@@ -1,5 +1,5 @@
 # =============================================================================
-# Agent Zero - Docker Swarm Production Configuration
+# TallmanZero - Docker Swarm Production Configuration
 # =============================================================================
 # Uses the official pre-built Agent Zero image for production deployment
 # on the Tallman Docker Swarm cluster.
