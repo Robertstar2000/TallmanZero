@@ -12,9 +12,10 @@
 
 services:
   agent-zero:
-    container_name: agent-zero
-    image: agent0ai/agent-zero:latest
-    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: DockerfileLocal
+    # image: agent0ai/agent-zero:latest
 
     # Port Mappings
     # - 50001: Main Web UI
