@@ -1,0 +1,7 @@
+﻿C:\Users\rober\TallmanAgentZero\agent-zero\docker\run\fs\exe\run_tunnel_api.sh:16:    --port=80 \
+C:\Users\rober\TallmanAgentZero\agent-zero\python\helpers\docker.py:58:                "web_port": (container.ports.get("80/tcp") or [{}])[0].get("HostPort"),
+C:\Users\rober\TallmanAgentZero\agent-zero\python\helpers\tty_session.py:212:    cols, rows = 80, 25
+C:\Users\rober\TallmanAgentZero\agent-zero\python\helpers\tunnel_manager.py:23:    def start_tunnel(self, port=80, provider="serveo"):
+C:\Users\rober\TallmanAgentZero\agent-zero\tests\test_file_tree_visualize.py:77:    print(char * 80)
+C:\Users\rober\TallmanAgentZero\agent-zero\tests\test_file_tree_visualize.py:79:    print(char * 80)
+C:\Users\rober\TallmanAgentZero\agent-zero\tests\test_file_tree_visualize.py:84:    print("-" * 80)

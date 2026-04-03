@@ -35,13 +35,13 @@ def get_git_info():
     except:
         tag = ""
 
-    version = branch[0].upper() + " " + ( short_tag or commit_hash[:7] )
+    version = "Tallman Zero v1.0.0"
 
     # Create the dictionary with collected information
     git_info = {
         "branch": branch,
         "commit_hash": commit_hash,
-        "commit_time": commit_time,
+        "commit_time": "",
         "tag": tag,
         "short_tag": short_tag,
         "version": version

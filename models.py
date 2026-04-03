@@ -60,6 +60,7 @@ turn_off_logging()
 browser_use_monkeypatch.apply()
 
 litellm.modify_params = True # helps fix anthropic tool calls by browser-use
+litellm.drop_params = True  # Drop unsupported params for GPT-5 compatibility
 
 class ModelType(Enum):
     CHAT = "Chat"

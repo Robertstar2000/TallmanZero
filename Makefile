@@ -60,7 +60,7 @@ dev-bg:
 	@echo "Starting development environment in background..."
 	docker-compose up -d --build
 	@echo ""
-	@echo "Agent Zero is running at: http://localhost:50001"
+	@echo "Agent Zero is running at: http://localhost:3190"
 	@echo "View logs with: make logs"
 
 # Stop all containers
@@ -93,7 +93,7 @@ rebuild: clean
 	docker-compose build --no-cache
 	docker-compose up -d
 	@echo ""
-	@echo "Rebuild complete. Access at: http://localhost:50001"
+	@echo "Rebuild complete. Access at: http://localhost:3190"
 
 # Remove unused Docker resources
 prune:
@@ -124,12 +124,12 @@ info:
 	@echo ""
 	@echo "Local Development:"
 	@echo "  Compose File: docker-compose.yml"
-	@echo "  Web UI:       http://localhost:50001"
+	@echo "  Web UI:       http://localhost:3190"
 	@echo "  SSH:          localhost:50022"
 	@echo ""
 	@echo "Docker Swarm Production:"
 	@echo "  Compose File: docker-compose-swarm.yml"
-	@echo "  Web UI:       https://agentzero.swarm.tallmanequipment.com"
+	@echo "  Web UI:       https://agent.tallmanequipment.com"
 	@echo "  Cluster VIP:  10.10.20.65"
 	@echo ""
 	@echo "Documentation:"

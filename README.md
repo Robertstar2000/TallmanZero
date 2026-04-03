@@ -1,3 +1,9 @@
+# Tallman Zero v1.0.0
+Source Path: c:\Users\rober\TallmanAgentZero\agent-zero
+Ports Used: 3190 (Web UI), 55520 (Tunnel API), 5432 (PostgreSQL)
+GitHub: https://github.com/Robertstar2000/TallmanZero.git
+# Tallman Zero v1.0.0
+
 <div align="center">
 
 # `TallmanZero`
@@ -91,7 +97,15 @@ Or see DeepWiki generated documentation:
 - The terminal interface is real-time streamed and interactive. You can stop and intervene at any point. If you see your agent heading in the wrong direction, just stop and tell it right away.
 - There is a lot of freedom in this framework. You can instruct your agents to regularly report back to superiors asking for permission to continue. You can instruct them to use point-scoring systems when deciding when to delegate subtasks. Superiors can double-check subordinates' results and dispute. The possibilities are endless.
 
-## 🚀 Things you can build with TallmanZero
+## 🛡️ User Authentication
+
+Tallman Zero features a secure authentication system to govern access within the organization:
+
+- **Domain Restriction**: Access is restricted to users with the `@tallmanequipment.com` domain.
+- **Secure Sign-in/Sign-up**: Integrated user management with password hashing.
+- **Industrial Master Access**: Emergency override for authorized administrators.
+
+To access the platform, please use your corporate credentials. If you are a first-time user, use the Sign Up feature to create your account using your corporate email.
 
 - **Development Projects** - `"Create a React dashboard with real-time data visualization"`
 
@@ -119,9 +133,9 @@ A detailed setup guide for Windows, macOS, and Linux with a video can be found i
 # Pull and run with Docker
 
 docker pull agent0ai/agent-zero
-docker run -p 50001:80 agent0ai/agent-zero
+docker run -p 3190:3190 agent0ai/agent-zero
 
-# Visit http://localhost:50001 to start
+# Visit http://localhost:3190 to start
 ```
 
 ## 🚀 Verified Deployment Paths
@@ -145,7 +159,7 @@ TallmanZero supports dual deployment configurations for both development and pro
 # Build and run locally
 docker-compose up --build
 
-# Access at http://localhost:50001
+# Access at http://localhost:3190
 ```
 
 ### Docker Swarm (Production)
@@ -156,7 +170,7 @@ ssh 10.10.20.36
 cd /var/data/config
 make deploy STACK=agentzero
 
-# Access at https://agentzero.swarm.tallmanequipment.com
+# Access at https://agent.tallmanequipment.com
 ```
 
 ### Persistence Compliance
@@ -170,8 +184,8 @@ make deploy STACK=agentzero
 
 | Environment | Web UI | Management |
 |-------------|--------|------------|
-| **Desktop** | http://localhost:50001 | - |
-| **Swarm** | https://agentzero.swarm.tallmanequipment.com | https://portainer.swarm.tallmanequipment.com |
+| **Desktop** | http://localhost:3190 | - |
+| **Swarm** | https://agent.tallmanequipment.com | https://portainer.swarm.tallmanequipment.com |
 
 📖 **Full deployment documentation**: [DEPLOYMENT.md](./DEPLOYMENT.md)
 

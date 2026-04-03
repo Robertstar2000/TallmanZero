@@ -9,7 +9,7 @@ python /a0/prepare.py --dockerized=true
 echo "Starting A0..."
 exec python /a0/run_ui.py \
     --dockerized=true \
-    --port=80 \
+    --port=3190 \
     --host="0.0.0.0"
     # --code_exec_ssh_enabled=true \
     # --code_exec_ssh_addr="localhost" \

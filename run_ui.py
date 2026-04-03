@@ -18,6 +18,7 @@ from python.helpers.extract_tools import load_classes_from_folder
 from python.helpers.api import ApiHandler
 from python.helpers.print_style import PrintStyle
 from python.helpers import login
+from python.helpers import db, auth
 
 # disable logging
 import logging
@@ -121,12 +122,13 @@ def requires_loopback(f):
 def requires_auth(f):
     @wraps(f)
     async def decorated(*args, **kwargs):
-        user_pass_hash = login.get_credentials_hash()
-        # If no auth is configured, just proceed
-        if not user_pass_hash:
-            return await f(*args, **kwargs)
-
-        if session.get('authentication') != user_pass_hash:
+        # If no auth is configured in session, or it doesn't match a valid user hash
+        user_email = session.get('user_email')
+        if not user_email:
+            return redirect(url_for('login_handler'))
+        
+        session_hash = session.get('authentication')
+        if session_hash != auth.get_session_hash(user_email):
             return redirect(url_for('login_handler'))
         
         return await f(*args, **kwargs)
@@ -150,11 +152,12 @@ def csrf_protect(f):
 async def login_handler():
     error = None
     if request.method == 'POST':
-        user = dotenv.get_dotenv_value("AUTH_LOGIN")
-        password = dotenv.get_dotenv_value("AUTH_PASSWORD")
+        email = request.form['username'].lower().strip()
+        password = request.form['password']
         
-        if request.form['username'] == user and request.form['password'] == password:
-            session['authentication'] = login.get_credentials_hash()
+        if auth.authenticate_user(email, password):
+            session['user_email'] = email
+            session['authentication'] = auth.get_session_hash(email)
             return redirect(url_for('serve_index'))
         else:
             error = 'Invalid Credentials. Please try again.'
@@ -162,9 +165,35 @@ async def login_handler():
     login_page_content = files.read_file("webui/login.html")
     return render_template_string(login_page_content, error=error)
 
+@webapp.route("/signup", methods=["GET", "POST"])
+async def signup_handler():
+    error = None
+    message = None
+    if request.method == 'POST':
+        email = request.form['username']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        
+        if password != confirm_password:
+            error = "Passwords do not match."
+        else:
+            success, msg = auth.register_user(email, password)
+            if success:
+                message = msg
+                # Optionally auto-login or redirect to login
+            else:
+                error = msg
+                
+    signup_page_content = files.read_file("webui/signup.html")
+    if signup_page_content is None:
+        return "Signup page not found.", 404
+        
+    return render_template_string(signup_page_content, error=error, message=message)
+
 @webapp.route("/logout")
 async def logout_handler():
     session.pop('authentication', None)
+    session.pop('user_email', None)
     return redirect(url_for('login_handler'))
 
 # handle default address, load index
@@ -262,6 +291,7 @@ def run():
     init_a0()
 
     # run the server
+    db.init_db()
     server.serve_forever()
 
 

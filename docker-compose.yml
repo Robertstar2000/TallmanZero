@@ -20,7 +20,7 @@ services:
     # Port Mappings
     # - 50001: Main Web UI
     ports:
-      - "50001:80"
+      - "3190:3190"
 
     # Volume Mounts for Data Persistence & Hot Reloading
     volumes:
@@ -28,10 +28,12 @@ services:
       - ./prompts:/a0/prompts
       - ./webui:/a0/webui
       - ./python:/a0/python
+      - ./run_ui.py:/a0/run_ui.py
 
     # Environment Configuration
     environment:
       - TZ=America/New_York
+      - PYTHONDONTWRITEBYTECODE=1
 
 # Named Volumes for Data Persistence
 volumes:

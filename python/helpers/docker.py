@@ -55,7 +55,7 @@ class DockerContainerManager:
                 "status": container.status,
                 "image": container.image,
                 "ports": container.ports,
-                "web_port": (container.ports.get("80/tcp") or [{}])[0].get("HostPort"),
+                "web_port": (container.ports.get("3190/tcp") or [{}])[0].get("HostPort"),
                 "ssh_port": (container.ports.get("22/tcp") or [{}])[0].get("HostPort"),
                 # "volumes": container.volumes,
                 # "data_folder": container.volumes["/a0"],

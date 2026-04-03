@@ -1,0 +1,70 @@
+version: '3.8'
+
+networks:
+  # Dedicated network for Traefik to securely expose this service
+  agentzero_traefik:
+    driver: overlay
+    attachable: true
+
+  # Internal network for the app components
+  agentzero_internal:
+    driver: overlay
+    attachable: true
+
+services:
+  agent-zero:
+    image: agent0ai/agent-zero:latest
+    networks:
+      - agentzero_traefik
+      - agentzero_internal
+    volumes:
+      # Storage node NFS mapping
+      - /var/data/agent_zero_data:/a0
+    environment:
+      - TZ=America/New_York
+      - ALLOWED_ORIGINS=https://agent.tallmanequipment.com,https://agent.tallmanequipment.com:*
+      # Connect to the local Ollama LLM
+      - OLLAMA_API_BASE=http://10.10.20.60:11434
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        monitor: 60s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 120s
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        # Enable Traefik routing
+        - "traefik.enable=true"
+        
+        # Domain configuration
+        - "traefik.http.routers.agentzero.rule=Host(`agent.tallmanequipment.com`)"
+        - "traefik.http.routers.agentzero.entrypoints=https"
+        - "traefik.http.routers.agentzero.tls.certresolver=letsencrypt"
+        
+        # Internal application port routing
+        - "traefik.http.services.agentzero.loadbalancer.server.port=3190"
+        - "traefik.http.services.agentzero.loadbalancer.sticky.cookie=true"
+        - "traefik.http.services.agentzero.loadbalancer.sticky.cookie.name=agentzero_session"
+        
+        # Swarm Network Configuration
+        # IMPORTANT: This matches <stack_name>_<network_name>
+        # Below assumes you name the stack "agentzero" in Portainer. 
+        # If your stack is named "agent", update this to "agent_agentzero_traefik"
+        - "traefik.swarm.network=agentzero_agentzero_traefik"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3190/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

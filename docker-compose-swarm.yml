@@ -39,11 +39,14 @@ services:
     # NFS Volume Mounts (Shared Persistence)
     # All data resides on /var/data for cross-node portability
     volumes:
-      - /var/data/agentzero/data:/a0
+      - /var/data/agent_zero_data:/a0
 
     # Environment Configuration
     environment:
       - TZ=America/New_York
+      - ALLOWED_ORIGINS=https://agent.tallmanequipment.com,https://agent.tallmanequipment.com:*
+      # IMPORTANT: Replace with your actual OpenAI API key
+      - OPENAI_API_KEY=sk-YOUR-OPENAI-API-KEY-HERE
 
     # Swarm Deployment Configuration
     deploy:
@@ -90,12 +93,12 @@ services:
         - "traefik.enable=true"
 
         # Router Configuration
-        - "traefik.http.routers.agentzero.rule=Host(`agentzero.swarm.tallmanequipment.com`)"
+        - "traefik.http.routers.agentzero.rule=Host(`agent.tallmanequipment.com`)"
         - "traefik.http.routers.agentzero.entrypoints=https"
         - "traefik.http.routers.agentzero.tls.certresolver=letsencrypt"
 
         # Service Configuration
-        - "traefik.http.services.agentzero.loadbalancer.server.port=80"
+        - "traefik.http.services.agentzero.loadbalancer.server.port=3190"
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie=true"
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie.name=agentzero_session"
 
@@ -108,7 +111,7 @@ services:
 
     # Container Health Check
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:80/" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3190/" ]
       interval: 30s
       timeout: 10s
       retries: 3

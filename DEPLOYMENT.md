@@ -19,8 +19,8 @@ TallmanZero uses the official pre-built Docker image `agent0ai/agent-zero:latest
 
 | Environment | Compose File | Use Case | Access URL |
 |-------------|--------------|----------|------------|
-| **Docker Desktop** | `docker-compose.yml` | Local development | http://localhost:50001 |
-| **Docker Swarm** | `docker-compose-swarm.yml` | Production cluster | https://agentzero.swarm.tallmanequipment.com |
+| **Docker Desktop** | `docker-compose.yml` | Local development | http://localhost:3190 |
+| **Docker Swarm** | `docker-compose-swarm.yml` | Production cluster | https://agent.tallmanequipment.com |
 
 ### Master Registry
 
@@ -36,10 +36,10 @@ TallmanZero uses the official pre-built Docker image `agent0ai/agent-zero:latest
 
 ```powershell
 # Pull and run TallmanZero
-docker run -d -p 50001:80 -v agent-zero-data:/a0 --name agent-zero agent0ai/agent-zero:latest
+docker run -d -p 3190:3190 -v agent-zero-data:/a0 --name agent-zero agent0ai/agent-zero:latest
 
 # Open in browser
-start http://localhost:50001
+start http://localhost:3190
 ```
 
 ### Docker Swarm (Production)
@@ -84,7 +84,7 @@ make deploy STACK=agentzero
 
 4. **Access the Web UI:**
 
-   Open http://localhost:50001 in your browser
+   Open http://localhost:3190 in your browser
 
 5. **View logs (optional):**
 
@@ -101,12 +101,12 @@ docker pull agent0ai/agent-zero:latest
 # Run with persistent data
 docker run -d `
   --name agent-zero `
-  -p 50001:80 `
+  -p 3190:3190 `
   -v agent-zero-data:/a0 `
   --restart unless-stopped `
   agent0ai/agent-zero:latest
 
-# Access at http://localhost:50001
+# Access at http://localhost:3190
 ```
 
 ### Stopping and Removing
@@ -178,7 +178,7 @@ docker-compose up -d
 
 4. **Configure DNS:**
 
-   Point `agentzero.swarm.tallmanequipment.com` to `10.10.20.65` in AWS Route 53.
+   Point `agent.tallmanequipment.com` to `10.10.20.65` in AWS Route 53.
 
 5. **Deploy the stack:**
 
@@ -199,7 +199,7 @@ docker-compose up -d
 
 7. **Access the application:**
 
-   Open https://agentzero.swarm.tallmanequipment.com
+   Open https://agent.tallmanequipment.com
 
 ### Stack Management Commands
 
@@ -261,7 +261,7 @@ tar -czvf /var/data/backups/agentzero-$(date +%Y%m%d).tar.gz /var/data/agentzero
 **Container won't start:**
 ```powershell
 # Check for port conflicts
-netstat -ano | findstr :50001
+netstat -ano | findstr :3190
 
 # View container logs
 docker logs agent-zero
@@ -297,7 +297,7 @@ docker service logs agentzero_agent-zero
 
 **Can't access via domain:**
 
-1. Verify DNS: `nslookup agentzero.swarm.tallmanequipment.com`
+1. Verify DNS: `nslookup agent.tallmanequipment.com`
 2. Check Traefik: `docker service logs infra_traefik`
 3. Verify network: `docker network ls | grep agentzero`
 
@@ -314,7 +314,7 @@ sudo mount -a
 
 | Issue | Solution |
 |-------|----------|
-| Port 50001 in use | Change port in docker-compose.yml or stop conflicting service |
+| Port 3190 in use | Change port in docker-compose.yml or stop conflicting service |
 | Out of disk space | `docker system prune -a` |
 | Container keeps restarting | Check logs: `docker logs agent-zero` |
 | Old image running | Pull and restart: `docker-compose pull && docker-compose up -d` |
@@ -327,13 +327,13 @@ sudo mount -a
 
 | Service | URL |
 |---------|-----|
-| Web UI | http://localhost:50001 |
+| Web UI | http://localhost:3190 |
 
 ### Docker Swarm (Production)
 
 | Service | URL |
 |---------|-----|
-| TallmanZero | https://agentzero.swarm.tallmanequipment.com |
+| TallmanZero | https://agent.tallmanequipment.com |
 | Traefik Dashboard | https://traefik.swarm.tallmanequipment.com |
 | Portainer | https://portainer.swarm.tallmanequipment.com |
 

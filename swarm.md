@@ -71,7 +71,7 @@ A service is a container (or group of identical containers) running in the swarm
 *   Automatically discovers new applications deployed to the swarm
 *   Obtains and renews SSL certificates from Let's Encrypt
 *   Routes traffic based on domain names (e.g., app1.swarm.tallmanequipment.com → App 1)
-*   Uses AWS Route 53 for DNS validation (no need to open port 80 for validation)
+*   Uses AWS Route 53 for DNS validation (no need to open port 3190 for validation)
 
 **Access:** https://traefik.swarm.tallmanequipment.com
 
@@ -297,7 +297,7 @@ services:
         - "traefik.http.routers.webapp.rule=Host(`webapp.swarm.tallmanequipment.com`)"
         - "traefik.http.routers.webapp.entrypoints=https"
         - "traefik.http.routers.webapp.tls.certresolver=letsencrypt"
-        - "traefik.http.services.webapp.loadbalancer.server.port=80"
+        - "traefik.http.services.webapp.loadbalancer.server.port=3190"
         - "traefik.swarm.network=infra_traefik"
 ```
 
@@ -315,7 +315,7 @@ Traefik uses Docker labels to automatically configure routing:
 *   `traefik.http.routers.webapp.rule=Host(...)`: Domain name for this service
 *   `traefik.http.routers.webapp.entrypoints=https`: Use HTTPS
 *   `traefik.http.routers.webapp.tls.certresolver=letsencrypt`: Get SSL certificate
-*   `traefik.http.services.webapp.loadbalancer.server.port=80`: Container's internal port
+*   `traefik.http.services.webapp.loadbalancer.server.port=3190`: Container's internal port
 *   `traefik.swarm.network=infra_traefik`: Network where Traefik can reach the service
 
 ## Network Isolation Strategy

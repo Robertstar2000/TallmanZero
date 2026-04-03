@@ -9,6 +9,7 @@ memory/**
 logs/*
 tmp/*
 usr/*
+search_results.txt
 
 # Knowledge directory – keep only default/
 knowledge/**
@@ -24,13 +25,12 @@ instruments/**
 !**/.gitkeep
 
 
-###############################################################################
 # Environment / tooling
-###############################################################################
 .conda/
 .cursor/
 .venv/
-.git/
+**/.git/
+**/node_modules/
 
 
 ###############################################################################
@@ -55,3 +55,4 @@ instruments/**
 
 # Environment files anywhere
 *.env
+.env*

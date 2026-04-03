@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Tallman Zero</title>
+    <title>Sign Up - Tallman Zero</title>
     <link rel="stylesheet" href="/login.css">
     <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
 </head>
@@ -15,20 +15,19 @@
         <div class="hero-section">
             <div class="hero-content">
                 <h1>Tallman Zero</h1>
-                <p>The ultimate AI-driven orchestration platform designed for industrial efficiency and seamless
-                    automation.</p>
+                <p>Join the next generation of industrial AI. Secure, robust, and built for the Tallman ecosystem.</p>
                 <div class="hero-features">
                     <div class="feature-item">
                         <div class="feature-icon">✓</div>
-                        <span>Distributed Persistence Nexus</span>
+                        <span>Industrial-Grade Security</span>
                     </div>
                     <div class="feature-item">
                         <div class="feature-icon">✓</div>
-                        <span>Secure Identity Governance</span>
+                        <span>Centralized Data Management</span>
                     </div>
                     <div class="feature-item">
                         <div class="feature-icon">✓</div>
-                        <span>Fault-Tolerant AI Orchestration</span>
+                        <span>Custom AI Agent Workflows</span>
                     </div>
                 </div>
             </div>
@@ -39,15 +38,19 @@
             <div class="auth-container">
                 <div class="logo-container">
                     <img src="/public/splash.jpg" alt="Tallman Zero" class="logo">
-                    <h2>Welcome Back</h2>
-                    <p class="subtitle">Please enter your details to sign in.</p>
+                    <h2>Create Account</h2>
+                    <p class="subtitle">Join the Tallman Zero platform.</p>
                 </div>
 
                 {% if error %}
                 <div class="error-message">{{ error }}</div>
                 {% endif %}
 
-                <form method="POST" action="/login">
+                {% if message %}
+                <div class="success-message">{{ message }}</div>
+                {% endif %}
+
+                <form method="POST" action="/signup">
                     <div class="form-group">
                         <label for="username">Email Address</label>
                         <input type="email" id="username" name="username" placeholder="name@tallmanequipment.com"
@@ -57,15 +60,20 @@
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" placeholder="••••••••" required>
                     </div>
-                    <button type="submit" class="auth-button">Sign In</button>
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••"
+                            required>
+                    </div>
+                    <button type="submit" class="auth-button">Create Account</button>
                 </form>
 
                 <div class="auth-footer">
-                    Don't have an account? <a href="/signup">Sign up</a>
+                    Already have an account? <a href="/login">Sign in</a>
                 </div>
 
                 <div class="domain-note">
-                    Note: Access is restricted to accounts with the @tallmanequipment.com domain.
+                    Note: Accounts must use the @tallmanequipment.com domain.
                 </div>
             </div>
         </div>

@@ -123,14 +123,14 @@ Optionally you can map local folders for file persistence:
 > [!TIP]
 > Alternatively, run the following command in your terminal:
 > ```bash
-> docker run -p $PORT:80 -v /path/to/your/data:/a0 agent0ai/agent-zero
+> docker run -p $PORT:3190 -v /path/to/your/data:/a0 agent0ai/agent-zero
 > ```
 > - Replace `$PORT` with the port you want to use (e.g., `50080`)
 > - Replace `/path/to/your/data` with your chosen directory path
 
 2.4. Access the Web UI:
 - The framework will take a few seconds to initialize and the Docker logs will look like the image below.
-- Find the mapped port in Docker Desktop (shown as `<PORT>:80`) or click the port right under the container ID as shown in the image below
+- Find the mapped port in Docker Desktop (shown as `<PORT>:3190`) or click the port right under the container ID as shown in the image below
 
 ![docker logs](res/setup/5-docker-click-to-open.png)
 
@@ -298,8 +298,8 @@ Agent Zero's Web UI is accessible from any device on your network through the Do
 
 1. The Docker container automatically exposes the Web UI on all network interfaces
 2. Find the mapped port in Docker Desktop:
-   - Look under the container name (usually in the format `<PORT>:80`)
-   - For example, if you see `32771:80`, your port is `32771`
+   - Look under the container name (usually in the format `<PORT>:3190`)
+   - For example, if you see `32771:3190`, your port is `32771`
 3. Access the Web UI from any device using:
    - Local access: `http://localhost:<PORT>`
    - Network access: `http://<YOUR_COMPUTER_IP>:<PORT>`
@@ -369,7 +369,7 @@ For developers or users who need to run Agent Zero directly on their system,see 
 > docker pull agent0ai/agent-zero
 >
 > # Run new container with the same volume mount
-> docker run -p $PORT:80 -v /path/to/your/data:/a0 agent0ai/agent-zero
+> docker run -p $PORT:3190 -v /path/to/your/data:/a0 agent0ai/agent-zero
 > ```
 
       
