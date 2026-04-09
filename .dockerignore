@@ -11,19 +11,19 @@ knowledge/custom/**
 logs/*
 tmp/*
 usr/*
+search_results.txt
 
 
 # Keep .gitkeep markers anywhere
 !**/.gitkeep
 
 
-###############################################################################
 # Environment / tooling
-###############################################################################
 .conda/
 .cursor/
 .venv/
-.git/
+**/.git/
+**/node_modules/
 
 
 ###############################################################################
@@ -48,3 +48,4 @@ usr/*
 
 # Environment files anywhere
 *.env
+.env*

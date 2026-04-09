@@ -35,7 +35,8 @@ fi
 # pip install torch --index-url https://download.pytorch.org/whl/cpu
 
 # Install remaining A0 python packages
-uv pip install -r /git/agent-zero/requirements.txt
+uv pip install setuptools
+uv pip install -r /git/agent-zero/requirements.txt --no-build-isolation
 # override for packages that have unnecessarily strict dependencies
 uv pip install -r /git/agent-zero/requirements2.txt
 

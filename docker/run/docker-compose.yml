@@ -5,4 +5,4 @@ services:
     volumes:
       - ./agent-zero:/a0
     ports:
-      - "50080:80"
+      - "3190:3190"

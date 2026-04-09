@@ -1,0 +1,41 @@
+# =============================================================================
+# TallmanZero - Docker Desktop Development Configuration
+# =============================================================================
+# Uses the official pre-built Agent Zero image for fast deployment.
+# No build required - just pull and run!
+#
+# Usage:
+#   docker-compose up -d              # Start in background
+#   docker-compose logs -f agent-zero # View logs
+#   docker-compose down               # Stop and remove containers
+# =============================================================================
+
+services:
+  agent-zero:
+    build:
+      context: .
+      dockerfile: DockerfileLocal
+    # image: agent0ai/agent-zero:latest
+
+    # Port Mappings
+    # - 50001: Main Web UI
+    ports:
+      - "3190:3190"
+
+    # Volume Mounts for Data Persistence & Hot Reloading
+    volumes:
+      - agent-zero-data:/a0
+      - ./prompts:/a0/prompts
+      - ./webui:/a0/webui
+      - ./python:/a0/python
+      - ./run_ui.py:/a0/run_ui.py
+
+    # Environment Configuration
+    environment:
+      - TZ=America/New_York
+      - PYTHONDONTWRITEBYTECODE=1
+
+# Named Volumes for Data Persistence
+volumes:
+  agent-zero-data:
+    driver: local

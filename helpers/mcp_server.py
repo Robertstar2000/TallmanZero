@@ -28,12 +28,12 @@ _PRINTER = PrintStyle(italic=True, font_color="green", padding=False)
 _mcp_project_name: contextvars.ContextVar[str | None] = contextvars.ContextVar('mcp_project_name', default=None)
 
 mcp_server: FastMCP = FastMCP(
-    name="Agent Zero integrated MCP Server",
+    name="Tallman Zero integrated MCP Server",
     instructions="""
-    Connect to remote Agent Zero instance.
-    Agent Zero is a general AI assistant controlling it's linux environment.
-    Agent Zero can install software, manage files, execute commands, code, use internet, etc.
-    Agent Zero's environment is isolated unless configured otherwise.
+    Connect to remote Tallman Zero instance.
+    Tallman Zero is a general AI assistant controlling it's linux environment.
+    Tallman Zero can install software, manage files, execute commands, code, use internet, etc.
+    Tallman Zero's environment is isolated unless configured otherwise.
     """,
 )
 
@@ -59,8 +59,8 @@ class ToolError(BaseModel):
 
 
 SEND_MESSAGE_DESCRIPTION = """
-Send a message to the remote Agent Zero Instance.
-This tool is used to send a message to the remote Agent Zero Instance connected remotely via MCP.
+Send a message to the remote Tallman Zero Instance.
+This tool is used to send a message to the remote Tallman Zero Instance connected remotely via MCP.
 """
 
 
@@ -93,7 +93,7 @@ async def send_message(
     message: Annotated[
         str,
         Field(
-            description="The message to send to the remote Agent Zero Instance",
+            description="The message to send to the remote Tallman Zero Instance",
             title="message",
         ),
     ],
@@ -185,10 +185,10 @@ async def send_message(
 
 
 FINISH_CHAT_DESCRIPTION = """
-Finish a chat with the remote Agent Zero Instance.
-This tool is used to finish a persistent chat (send_message with persistent_chat=True) with the remote Agent Zero Instance connected remotely via MCP.
+Finish a chat with the remote Tallman Zero Instance.
+This tool is used to finish a persistent chat (send_message with persistent_chat=True) with the remote Tallman Zero Instance connected remotely via MCP.
 If you want to continue the chat, use the send_message tool instead.
-Always use this tool to finish persistent chat conversations with remote Agent Zero.
+Always use this tool to finish persistent chat conversations with remote Tallman Zero.
 """
 
 
