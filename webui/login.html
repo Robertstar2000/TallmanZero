@@ -1,30 +1,50 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Agent Zero</title>
+    <title>Login - Tallman Zero</title>
     <link rel="stylesheet" href="/login.css">
     <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
 </head>
 <body>
-    <div class="login-container">
-        <form class="login-form" method="POST" action="/login">
-            <img src="/public/splash.jpg" alt="Agent Zero Logo" class="logo">
-            <h2>Agent Zero</h2>
-            <div class="input-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
+    <div class="auth-wrapper">
+        <div class="hero-section">
+            <div class="hero-content">
+                <h1>Tallman Zero</h1>
+                <p>The ultimate AI-driven orchestration platform designed for industrial efficiency and seamless automation.</p>
+                <div class="hero-features">
+                    <div class="feature-item"><div class="feature-icon">✓</div><span>Distributed Persistence Nexus</span></div>
+                    <div class="feature-item"><div class="feature-icon">✓</div><span>Secure Identity Governance</span></div>
+                    <div class="feature-item"><div class="feature-icon">✓</div><span>Fault-Tolerant AI Orchestration</span></div>
+                </div>
             </div>
-            <div class="input-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+        </div>
+        <div class="auth-section">
+            <div class="auth-container">
+                <div class="logo-container">
+                    <img src="/public/splash.jpg" alt="Tallman Zero" class="logo">
+                    <h2>Welcome Back</h2>
+                    <p class="subtitle">Please enter your details to sign in.</p>
+                </div>
+                {% if error %}
+                <div class="error-message">{{ error }}</div>
+                {% endif %}
+                <form method="POST" action="/login">
+                    <div class="form-group">
+                        <label for="username">Email Address</label>
+                        <input type="email" id="username" name="username" placeholder="name@tallmanequipment.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="auth-button">Sign In</button>
+                </form>
+                <div class="auth-footer">Don't have an account? <a href="/signup">Sign up</a></div>
+                <div class="domain-note">Note: Access is restricted to accounts with the @tallmanequipment.com domain.</div>
             </div>
-            <button type="submit">Login</button>
-            {% if error %}
-                <p class="error">{{ error }}</p>
-            {% endif %}
-        </form>
+        </div>
     </div>
 </body>
 </html>

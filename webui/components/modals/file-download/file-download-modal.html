@@ -1,0 +1,451 @@
+<html>
+<head>
+    <script type="module">
+        import { createStore } from "/js/AlpineStore.js";
+
+        createStore("fileDownloadStore", {
+            isVisible: false,
+            files: [],
+            downloadedPaths: new Set(),
+
+            show(files) {
+                this.files = files || [];
+                this.isVisible = true;
+            },
+
+            hide() {
+                this.isVisible = false;
+            },
+
+            getFileIcon(ext) {
+                const icons = {
+                    // Documents
+                    pdf: "picture_as_pdf",
+                    docx: "article", doc: "article", odt: "article", rtf: "article",
+                    txt: "text_snippet", md: "description", rst: "description", tex: "description",
+                    // Spreadsheets / Data
+                    csv: "table_chart", xlsx: "table_chart", xls: "table_chart",
+                    json: "data_object", yaml: "data_object", yml: "data_object",
+                    xml: "code", toml: "settings",
+                    // Code
+                    py: "code", js: "javascript", ts: "code", jsx: "code", tsx: "code",
+                    sh: "terminal", bash: "terminal", zsh: "terminal",
+                    html: "html", css: "css", java: "coffee", go: "code",
+                    rs: "code", rb: "code", php: "php", cs: "code",
+                    sql: "storage", ipynb: "science",
+                    // Archives
+                    zip: "folder_zip", tar: "folder_zip", gz: "folder_zip",
+                    // Config
+                    cfg: "settings", ini: "settings", conf: "settings", env: "key",
+                };
+                return icons[ext] || "insert_drive_file";
+            },
+
+            formatSize(bytes) {
+                if (bytes < 1024) return bytes + " B";
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+                return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+            },
+
+            async downloadFile(file) {
+                const url = `/download_work_dir_file?path=${encodeURIComponent(file.path)}`;
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = file.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                this.downloadedPaths = new Set([...this.downloadedPaths, file.path]);
+            },
+
+            async downloadAll() {
+                for (const file of this.files) {
+                    await this.downloadFile(file);
+                    await new Promise(r => setTimeout(r, 300)); // small delay between downloads
+                }
+            },
+
+            isDownloaded(path) {
+                return this.downloadedPaths.has(path);
+            }
+        });
+
+        // Listen for file_output events from the polling loop
+        document.addEventListener("a0_log_event", (event) => {
+            try {
+                const item = event.detail;
+                // files are passed in event.detail.files (from kvps.files)
+                const files = item && Array.isArray(item.files) ? item.files : [];
+                if (item && item.type === "file_output" && files.length > 0) {
+                    console.log("[TallmanZero] Showing download modal for:", files);
+                    if (window.Alpine && Alpine.store("fileDownloadStore")) {
+                        Alpine.store("fileDownloadStore").show(files);
+                    }
+                }
+            } catch (e) {
+                console.warn("fileDownloadStore event handler error:", e);
+            }
+        });
+
+        // Also expose a global function for manual triggering
+        globalThis.showFileDownloadModal = (files) => {
+            if (window.Alpine && Alpine.store("fileDownloadStore")) {
+                Alpine.store("fileDownloadStore").show(files);
+            }
+        };
+    </script>
+</head>
+
+<body>
+    <!-- TallmanZero File Download Modal -->
+    <div x-data x-show="$store.fileDownloadStore && $store.fileDownloadStore.isVisible"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="tz-download-overlay"
+         @click.self="$store.fileDownloadStore.hide()"
+         @keydown.escape.window="$store.fileDownloadStore.isVisible && $store.fileDownloadStore.hide()">
+
+        <template x-if="$store.fileDownloadStore">
+            <div class="tz-download-modal" x-data="$store.fileDownloadStore">
+
+                <!-- Modal Header -->
+                <div class="tz-download-header">
+                    <div class="tz-download-header-left">
+                        <span class="material-symbols-outlined tz-download-header-icon">download</span>
+                        <div>
+                            <h2 class="tz-download-title">Files Ready</h2>
+                            <p class="tz-download-subtitle"
+                               x-text="files.length === 1 ? '1 file was created by the agent' : files.length + ' files were created by the agent'">
+                            </p>
+                        </div>
+                    </div>
+                    <button class="tz-download-close" @click="hide()" title="Close">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <!-- File List -->
+                <div class="tz-download-body">
+                    <template x-for="(file, index) in files" :key="file.path">
+                        <div class="tz-file-card" :class="{'tz-file-downloaded': isDownloaded(file.path)}">
+                            <div class="tz-file-icon-wrap">
+                                <span class="material-symbols-outlined tz-file-icon" x-text="getFileIcon(file.ext)"></span>
+                                <span class="tz-file-check" x-show="isDownloaded(file.path)">
+                                    <span class="material-symbols-outlined">check_circle</span>
+                                </span>
+                            </div>
+                            <div class="tz-file-info">
+                                <div class="tz-file-name" x-text="file.name"></div>
+                                <div class="tz-file-meta">
+                                    <span class="tz-file-path" x-text="file.path"></span>
+                                    <span class="tz-file-size" x-text="formatSize(file.size)"></span>
+                                </div>
+                            </div>
+                            <button class="tz-file-dl-btn"
+                                    @click="downloadFile(file)"
+                                    :class="{'tz-dl-done': isDownloaded(file.path)}"
+                                    :title="isDownloaded(file.path) ? 'Download again' : 'Download ' + file.name">
+                                <span class="material-symbols-outlined"
+                                      x-text="isDownloaded(file.path) ? 'download_done' : 'download'"></span>
+                                <span x-text="isDownloaded(file.path) ? 'Downloaded' : 'Download'"></span>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="tz-download-footer">
+                    <button class="tz-btn-secondary" @click="hide()">Dismiss</button>
+                    <button class="tz-btn-primary" @click="downloadAll()" x-show="files.length > 1">
+                        <span class="material-symbols-outlined">download_for_offline</span>
+                        Download All
+                    </button>
+                </div>
+
+            </div>
+        </template>
+    </div>
+
+    <style>
+        /* TallmanZero File Download Modal Styles */
+        .tz-download-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .tz-download-modal {
+            background: var(--color-panel, #1e2130);
+            border: 1px solid var(--color-border, #2d3250);
+            border-radius: 16px;
+            width: min(560px, 95vw);
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow:
+                0 25px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+            animation: tz-modal-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes tz-modal-in {
+            from { opacity: 0; transform: scale(0.92) translateY(12px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Header */
+        .tz-download-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid var(--color-border, #2d3250);
+        }
+
+        .tz-download-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .tz-download-header-icon {
+            font-size: 2rem;
+            color: #4e9fff;
+            background: rgba(78, 159, 255, 0.12);
+            border-radius: 10px;
+            padding: 8px;
+        }
+
+        .tz-download-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--color-text, #e4e6f0);
+            margin: 0 0 2px;
+        }
+
+        .tz-download-subtitle {
+            font-size: 0.8rem;
+            color: var(--color-secondary, #8b8fa8);
+            margin: 0;
+        }
+
+        .tz-download-close {
+            background: transparent;
+            border: none;
+            color: var(--color-secondary, #8b8fa8);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: all 0.15s;
+            font-size: 0;
+        }
+        .tz-download-close:hover {
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--color-text, #e4e6f0);
+        }
+        .tz-download-close .material-symbols-outlined {
+            font-size: 1.3rem;
+        }
+
+        /* File list body */
+        .tz-download-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tz-file-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: var(--color-background, #161824);
+            border: 1px solid var(--color-border, #2d3250);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .tz-file-card:hover {
+            border-color: #4e9fff;
+            background: rgba(78, 159, 255, 0.04);
+        }
+
+        .tz-file-downloaded {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.04);
+        }
+
+        .tz-file-icon-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .tz-file-icon {
+            font-size: 2rem;
+            color: #4e9fff;
+        }
+
+        .tz-file-downloaded .tz-file-icon {
+            color: #22c55e;
+        }
+
+        .tz-file-check {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            background: #22c55e;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tz-file-check .material-symbols-outlined {
+            font-size: 10px;
+            color: #fff;
+        }
+
+        .tz-file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tz-file-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--color-text, #e4e6f0);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tz-file-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 3px;
+        }
+
+        .tz-file-path {
+            font-size: 0.72rem;
+            color: var(--color-secondary, #8b8fa8);
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .tz-file-size {
+            font-size: 0.72rem;
+            color: var(--color-secondary, #8b8fa8);
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.05);
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        .tz-file-dl-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: linear-gradient(135deg, #4e9fff, #7b61ff);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            box-shadow: 0 2px 10px rgba(78, 159, 255, 0.3);
+        }
+
+        .tz-file-dl-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(78, 159, 255, 0.45);
+        }
+
+        .tz-file-dl-btn.tz-dl-done {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            box-shadow: 0 2px 10px rgba(34, 197, 94, 0.3);
+        }
+
+        .tz-file-dl-btn .material-symbols-outlined {
+            font-size: 1rem;
+        }
+
+        /* Footer */
+        .tz-download-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 16px 24px 20px;
+            border-top: 1px solid var(--color-border, #2d3250);
+        }
+
+        .tz-btn-secondary {
+            padding: 8px 18px;
+            background: transparent;
+            border: 1px solid var(--color-border, #2d3250);
+            color: var(--color-secondary, #8b8fa8);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .tz-btn-secondary:hover {
+            border-color: var(--color-text, #e4e6f0);
+            color: var(--color-text, #e4e6f0);
+        }
+
+        .tz-btn-primary {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            background: linear-gradient(135deg, #4e9fff, #7b61ff);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 2px 12px rgba(78, 159, 255, 0.3);
+        }
+        .tz-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(78, 159, 255, 0.45);
+        }
+        .tz-btn-primary .material-symbols-outlined {
+            font-size: 1rem;
+        }
+
+        /* Scrollbar */
+        .tz-download-body::-webkit-scrollbar { width: 4px; }
+        .tz-download-body::-webkit-scrollbar-track { background: transparent; }
+        .tz-download-body::-webkit-scrollbar-thumb { background: var(--color-border, #2d3250); border-radius: 4px; }
+    </style>
+</body>
+</html>
