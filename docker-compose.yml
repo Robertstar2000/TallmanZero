@@ -1,41 +1,26 @@
 # =============================================================================
-# TallmanZero - Docker Desktop Development Configuration
+# TallmanZero - Final Robust Mount-Based Configuration
 # =============================================================================
-# Uses the official pre-built Agent Zero image for fast deployment.
-# No build required - just pull and run!
-#
-# Usage:
-#   docker-compose up -d              # Start in background
-#   docker-compose logs -f agent-zero # View logs
-#   docker-compose down               # Stop and remove containers
-# =============================================================================
-
 services:
   agent-zero:
-    build:
-      context: .
-      dockerfile: DockerfileLocal
-    # image: agent0ai/agent-zero:latest
-
-    # Port Mappings
-    # - 50001: Main Web UI
+    image: agent0ai/agent-zero:latest
     ports:
-      - "3190:3190"
-
-    # Volume Mounts for Data Persistence & Hot Reloading
+      - "3190:80"
     volumes:
-      - agent-zero-data:/a0
-      - ./prompts:/a0/prompts
-      - ./webui:/a0/webui
-      - ./python:/a0/python
-      - ./run_ui.py:/a0/run_ui.py
-
-    # Environment Configuration
+      - .:/a0
+      - agent-zero-data:/a0/tmp
+      - ./usr:/a0/usr
+      - ./webui/login.html:/a0/webui/login.html:ro
+      - ./webui/signup.html:/a0/webui/signup.html:ro
+      - ./webui/login.css:/a0/webui/login.css:ro
+      - ./webui/components/welcome/welcome-screen.html:/a0/webui/components/welcome/welcome-screen.html:ro
     environment:
       - TZ=America/New_York
       - PYTHONDONTWRITEBYTECODE=1
+      - AUTH_DISABLED=false
+      - WEB_UI_PORT=80
+      - WEB_UI_HOST=0.0.0.0
+      - OLLAMA_BASE_URL=http://host.docker.internal:11435
 
-# Named Volumes for Data Persistence
 volumes:
   agent-zero-data:
-    driver: local

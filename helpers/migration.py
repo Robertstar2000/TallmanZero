@@ -7,6 +7,9 @@ from helpers.print_style import PrintStyle
 
 
 def startup_migration() -> None:
+    from helpers import db
+    db.init_db()
+    
     migrate_user_data()
     convert_agents_json_yaml()
 

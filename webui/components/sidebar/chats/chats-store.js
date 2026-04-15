@@ -47,6 +47,8 @@ const model = {
     const lastSelectedChat = sessionStorage.getItem("lastSelectedChat");
     if (lastSelectedChat) {
       this.selectChat(lastSelectedChat);
+    } else {
+      this.newChat();
     }
   },
 

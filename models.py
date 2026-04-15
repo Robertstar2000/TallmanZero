@@ -1,4 +1,4 @@
-﻿from dataclasses import dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum
 import logging
 import os
@@ -19,13 +19,13 @@ import litellm
 import openai
 from litellm.types.utils import ModelResponse
 
-from python.helpers import dotenv
-from python.helpers import settings, dirty_json
-from python.helpers.dotenv import load_dotenv
-from python.helpers.providers import get_provider_config
-from python.helpers.rate_limiter import RateLimiter
-from python.helpers.tokens import approximate_tokens
-from python.helpers import dirty_json, browser_use_monkeypatch
+from helpers import dotenv
+from helpers import settings, dirty_json
+from helpers.dotenv import load_dotenv
+from helpers.providers import get_provider_config
+from helpers.rate_limiter import RateLimiter
+from helpers.tokens import approximate_tokens
+from helpers import dirty_json, browser_use_monkeypatch
 
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain_core.outputs.chat_generation import ChatGenerationChunk
@@ -48,7 +48,7 @@ from pydantic import ConfigDict
 def turn_off_logging():
     os.environ["LITELLM_LOG"] = "ERROR"  # only errors
     litellm.suppress_debug_info = True
-    # Silence **all** LiteLLM sub-loggers (utils, cost_calculatorâ€¦)
+    # Silence **all** LiteLLM sub-loggers (utils, cost_calculator…)
     for name in logging.Logger.manager.loggerDict:
         if name.lower().startswith("litellm"):
             logging.getLogger(name).setLevel(logging.ERROR)
@@ -72,6 +72,7 @@ class ModelConfig:
     type: ModelType
     provider: str
     name: str
+    api_key: str = ""
     api_base: str = ""
     ctx_length: int = 0
     limit_requests: int = 0
@@ -84,6 +85,8 @@ class ModelConfig:
         kwargs = self.kwargs.copy() or {}
         if self.api_base and "api_base" not in kwargs:
             kwargs["api_base"] = self.api_base
+        if self.api_key and "api_key" not in kwargs:
+            kwargs["api_key"] = self.api_key
         return kwargs
 
 
@@ -771,6 +774,8 @@ def _get_litellm_embedding(
     model_config: Optional[ModelConfig] = None,
     **kwargs: Any,
 ):
+    # use api key from kwargs or env
+    api_key = kwargs.pop("api_key", None) or get_api_key(provider_name)
     # Check if this is a local sentence-transformers model
     if provider_name == "huggingface" and model_name.startswith(
         "sentence-transformers/"
@@ -785,9 +790,6 @@ def _get_litellm_embedding(
             model_config=model_config,
             **kwargs,
         )
-
-    # use api key from kwargs or env
-    api_key = kwargs.pop("api_key", None) or get_api_key(provider_name)
 
     # Only pass API key if key is not a placeholder
     if api_key and api_key not in ("None", "NA"):

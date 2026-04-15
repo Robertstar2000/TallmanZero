@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,32 +7,33 @@
     <link rel="stylesheet" href="/login.css">
     <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
 </head>
-
 <body>
     <div class="auth-wrapper">
-        <!-- Hero Section -->
         <div class="hero-section">
             <div class="hero-content">
                 <h1>Tallman Zero</h1>
-                <p>Join the next generation of industrial AI. Secure, robust, and built for the Tallman ecosystem.</p>
-                <div class="hero-features">
-                    <div class="feature-item">
-                        <div class="feature-icon">✓</div>
-                        <span>Industrial-Grade Security</span>
+                <p class="hero-description">Join the next generation of industrial AI. Tallman Zero empowers your workflow with autonomous agents that execute specialized tasks with precision and persistent knowledge.</p>
+                <div class="hero-comparison">
+                    <div class="comparison-side standalone">
+                        <h3>Standalone LLM</h3>
+                        <ul>
+                            <li>Static Text Generation</li>
+                            <li>No Tool Access</li>
+                            <li>Isolated Sessions</li>
+                        </ul>
                     </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">✓</div>
-                        <span>Centralized Data Management</span>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">✓</div>
-                        <span>Custom AI Agent Workflows</span>
+                    <div class="comparison-vs">VS</div>
+                    <div class="comparison-side tallman">
+                        <h3>Tallman Zero</h3>
+                        <ul>
+                            <li>Autonomous Agent Actions</li>
+                            <li>Full Tool & Shell Integration</li>
+                            <li>Shared Knowledge & Persistence</li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Auth Section -->
         <div class="auth-section">
             <div class="auth-container">
                 <div class="logo-container">
@@ -41,43 +41,27 @@
                     <h2>Create Account</h2>
                     <p class="subtitle">Join the Tallman Zero platform.</p>
                 </div>
-
                 {% if error %}
                 <div class="error-message">{{ error }}</div>
                 {% endif %}
-
                 {% if message %}
-                <div class="success-message">{{ message }}</div>
+                <div class="success-message" style="color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 0.75rem; border-radius: 8px; margin-bottom: 1.5rem; text-align: center; font-size: 0.875rem; border: 1px solid rgba(16, 185, 129, 0.2);">{{ message }}</div>
                 {% endif %}
-
                 <form method="POST" action="/signup">
                     <div class="form-group">
                         <label for="username">Email Address</label>
-                        <input type="email" id="username" name="username" placeholder="name@tallmanequipment.com"
-                            required>
+                        <input type="email" id="username" name="username" placeholder="name@tallmanequipment.com" required>
                     </div>
                     <div class="form-group">
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" placeholder="••••••••" required>
                     </div>
-                    <div class="form-group">
-                        <label for="confirm_password">Confirm Password</label>
-                        <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••"
-                            required>
-                    </div>
-                    <button type="submit" class="auth-button">Create Account</button>
+                    <button type="submit" class="auth-button">Sign Up</button>
                 </form>
-
-                <div class="auth-footer">
-                    Already have an account? <a href="/login">Sign in</a>
-                </div>
-
-                <div class="domain-note">
-                    Note: Accounts must use the @tallmanequipment.com domain.
-                </div>
+                <div class="auth-footer">Already have an account? <a href="/login">Sign in</a></div>
+                <div class="domain-note">Note: Access is restricted to accounts with the @tallmanequipment.com domain.</div>
             </div>
         </div>
     </div>
 </body>
-
 </html>

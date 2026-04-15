@@ -18,8 +18,12 @@ services:
       - agentzero_traefik
       - agentzero_internal
     volumes:
-      # Storage node NFS mapping
+      # Primary data volume
       - /var/data/agent_zero_data:/a0
+      # Mount web files for hot-reloading / easier testing
+      - /var/data/agent_zero_data/webui:/a0/webui
+      # Mount knowledge files
+      - /var/data/agent_zero_data/knowledge:/a0/knowledge
     environment:
       - TZ=America/New_York
       - ALLOWED_ORIGINS=https://agent.tallmanequipment.com,https://agent.tallmanequipment.com:*

@@ -129,6 +129,12 @@ class UiServerRuntime:
             methods=["GET"],
         )
         self.webapp.add_url_rule(
+            "/signup",
+            "signup_handler",
+            handlers.signup_handler,
+            methods=["GET", "POST"],
+        )
+        self.webapp.add_url_rule(
             "/",
             "serve_index",
             handlers.serve_index,
@@ -199,13 +205,14 @@ class UiRouteHandlers:
 
     @extensible
     async def login_handler(self):
+        from helpers import auth, login
         error = None
         if request.method == "POST":
-            user = dotenv.get_dotenv_value("AUTH_LOGIN")
-            password = dotenv.get_dotenv_value("AUTH_PASSWORD")
+            user_record = auth.authenticate_user(request.form["username"], request.form["password"])
 
-            if request.form["username"] == user and request.form["password"] == password:
-                session["authentication"] = login.get_credentials_hash()
+            if user_record:
+                session["user"] = user_record
+                session["user_id"] = user_record["id"]
                 return redirect(url_for("serve_index"))
             else:
                 await asyncio.sleep(1)
@@ -214,9 +221,28 @@ class UiRouteHandlers:
         login_page_content = files.read_file("webui/login.html")
         return render_template_string(login_page_content, error=error)
 
+    async def signup_handler(self):
+        from helpers import auth, files
+        error = None
+        message = None
+        if request.method == "POST":
+            username = request.form.get("username")
+            password = request.form.get("password")
+            if not username or not password:
+                error = "Username and password are required."
+            else:
+                success, result = auth.register_user(username, password)
+                if success:
+                    message = "Registration successful! You can now sign in."
+                else:
+                    error = result
+
+        signup_page_content = files.read_file("webui/signup.html")
+        return render_template_string(signup_page_content, error=error, message=message)
+
     @extensible
     async def logout_handler(self):
-        session.pop("authentication", None)
+        session.clear()
         return redirect(url_for("login_handler"))
 
     @requires_auth
@@ -237,7 +263,7 @@ class UiRouteHandlers:
             version_time=gitinfo["commit_time"],
             runtime_id=runtime.get_runtime_id(),
             runtime_is_development=("true" if runtime.is_development() else "false"),
-            logged_in=("true" if login.get_credentials_hash() else "false"),
+            logged_in=("true" if login.get_current_user() else "false"),
         )
 
     @requires_auth

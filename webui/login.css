@@ -95,6 +95,72 @@ body {
     justify-content: center;
 }
 
+.hero-comparison {
+    display: flex;
+    align-items: stretch;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparison-side {
+    flex: 1;
+}
+
+.comparison-side h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.comparison-side ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.comparison-side ul li {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.comparison-side ul li::before {
+    content: '•';
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.comparison-side.standalone ul li::before {
+    color: #94a3b8;
+}
+
+.comparison-side.tallman ul li::before {
+    color: #10b981;
+}
+
+.comparison-vs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.5rem;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.3);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* Right Auth Section */
 .auth-section {
     flex: 1;

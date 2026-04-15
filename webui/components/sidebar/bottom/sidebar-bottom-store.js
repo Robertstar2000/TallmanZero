@@ -6,7 +6,6 @@ const model = {
   commitTime: "",
 
   get versionLabel() {
-    if (this.versionNo && !this.commitTime) return this.versionNo;
     return this.versionNo && this.commitTime
       ? `Version ${this.versionNo} ${this.commitTime}`
       : "";
@@ -15,9 +14,9 @@ const model = {
   init() {
     // Load version info from global scope (exposed in index.html)
     const gi = globalThis.gitinfo;
-    if (gi && gi.version) {
+    if (gi && gi.version && gi.commit_time) {
       this.versionNo = gi.version;
-      this.commitTime = gi.commit_time || "";
+      this.commitTime = gi.commit_time;
     }
   },
 };
