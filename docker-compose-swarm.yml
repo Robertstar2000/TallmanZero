@@ -1,14 +1,13 @@
 # =============================================================================
 # TallmanZero - Docker Swarm Production Configuration
 # =============================================================================
-# Uses the official pre-built Agent Zero image for production deployment
-# on the Tallman Docker Swarm cluster.
+# Deploys the hardened Tallman Zero agent to the Docker Swarm cluster.
 #
 # Deployment:
 #   1. Copy to /var/data/config/docker-compose-agentzero.yaml
-#   2. Create data directories: mkdir -p /var/data/agentzero/{data,logs}
+#   2. Create data dirs: mkdir -p /var/data/agent_zero_data/{chats,memory,projects,workdir,knowledge,logs}
 #   3. Deploy: make deploy STACK=agentzero
-#   4. Configure DNS: agentzero.swarm.tallmanequipment.com -> 10.10.20.65
+#   4. DNS: agent.tallmanequipment.com -> 10.10.20.65
 #
 # Management:
 #   - Update: make update STACK=agentzero
@@ -29,24 +28,29 @@ networks:
 
 services:
   agent-zero:
-    image: agent0ai/agent-zero:latest
+    # Custom hardened Tallman Zero image from Docker Hub
+    image: tallmanit/tallmanswarm:AppTallmanZero3.0
 
     # Network Configuration (Dual-Network Architecture)
     networks:
-      - agentzero_traefik # For Traefik routing
-      - agentzero_internal # For internal services
+      - agentzero_traefik   # For Traefik routing
+      - agentzero_internal  # For internal services
 
-    # NFS Volume Mounts (Shared Persistence)
-    # All data resides on /var/data for cross-node portability
+    # Persistent Volume Mounts (NFS shared storage on 10.10.20.64)
+    # Only user data directories are mounted to preserve the baked-in
+    # application code, plugins, and hardened UI inside the container.
     volumes:
-      - /var/data/agent_zero_data:/a0
+      - /var/data/agent_zero_data/chats:/a0/usr/chats
+      - /var/data/agent_zero_data/memory:/a0/usr/memory
+      - /var/data/agent_zero_data/projects:/a0/usr/projects
+      - /var/data/agent_zero_data/workdir:/a0/usr/workdir
+      - /var/data/agent_zero_data/knowledge:/a0/knowledge
+      - /var/data/agent_zero_data/logs:/a0/logs
 
     # Environment Configuration
     environment:
       - TZ=America/New_York
       - ALLOWED_ORIGINS=https://agent.tallmanequipment.com,https://agent.tallmanequipment.com:*
-      # IMPORTANT: Replace with your actual OpenAI API key
-      - OPENAI_API_KEY=sk-YOUR-OPENAI-API-KEY-HERE
 
     # Swarm Deployment Configuration
     deploy:
@@ -102,7 +106,7 @@ services:
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie=true"
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie.name=agentzero_session"
 
-        # Network for Traefik Communication
+        # Network for Traefik Communication (follows swarm naming: <stackname>_<networkname>)
         - "traefik.docker.network=agentzero_agentzero_traefik"
 
         # Health Check
