@@ -31,7 +31,7 @@ STATUS_FILE = Path("/exe/a0-self-update-status.yaml")
 LOG_FILE = Path("/exe/a0-self-update.log")
 DEFAULT_HEALTH_URL = os.environ.get(
     "A0_SELF_UPDATE_HEALTH_URL",
-    "http://127.0.0.1:80/api/health",
+    "http://127.0.0.1:3190/api/health",
 )
 DEFAULT_HEALTH_TIMEOUT_SECONDS = int(
     os.environ.get("A0_SELF_UPDATE_HEALTH_TIMEOUT_SECONDS", "120")
@@ -693,7 +693,7 @@ def launch_ui_process(repo_dir: Path, logger: AttemptLogger) -> subprocess.Popen
             sys.executable,
             str(repo_dir / "run_ui.py"),
             "--dockerized=true",
-            "--port=80",
+            "--port=3190",
             "--host=0.0.0.0",
         ],
         cwd=repo_dir,
@@ -1141,62 +1141,72 @@ def trigger_update_command(args: list[str]) -> int:
 
 
 def docker_run_ui() -> int:
-    request_data, raw_text = load_request_file()
-    logger = AttemptLogger(LOG_FILE)
+    # --- SELF-UPDATE DISABLED (Tallman deployment) ---
+    # The self-update feature is disabled to prevent conflicts with the
+    # hardened Tallman Swarm image. The trigger-file check and all git
+    # checkout logic below are bypassed. Only the UI process is launched.
+    # To re-enable, remove the early return and the two comment lines above.
     quiet_logger = NullLogger()
-
-    if request_data:
-        logger.reset()
-        logger.log(f"Consumed update file at {TRIGGER_FILE}")
-        logger.log_block("Trigger file content", raw_text)
-
-        try:
-            current = get_repo_version_info(REPO_DIR)
-            requested_branch = str(request_data.get("branch", "")).strip()
-            requested_tag = str(request_data.get("tag", "")).strip()
-            if installed_target_matches_request(
-                current,
-                requested_branch=requested_branch,
-                requested_tag=requested_tag,
-            ):
-                logger.log(
-                    "Requested tag already matches the installed version, skipping file replacement."
-                )
-                record_result(
-                    status="skipped",
-                    message="Requested tag already matches the installed version.",
-                    request_data=request_data,
-                    source_info=current,
-                    current_version=current["short_tag"],
-                    started_at=now_iso(),
-                    rollback_applied=False,
-                )
-                process = launch_ui_process(REPO_DIR, logger)
-            else:
-                process = execute_pending_update(request_data, logger=logger)
-        except Exception as exc:
-            logger.log(f"Self-update bootstrap failed unexpectedly: {exc}")
-            process = launch_ui_process(REPO_DIR, logger)
-    elif raw_text:
-        logger.reset()
-        logger.log(f"Consumed invalid update file at {TRIGGER_FILE}")
-        logger.log_block("Trigger file content", raw_text)
-        source_info = get_repo_version_info(REPO_DIR)
-        record_result(
-            status="failed",
-            message="Update file was not valid YAML.",
-            request_data={},
-            source_info=source_info,
-            current_version=source_info["short_tag"],
-            started_at=now_iso(),
-            rollback_applied=False,
-            error="Update file was not valid YAML.",
-        )
-        process = launch_ui_process(REPO_DIR, logger)
-    else:
-        process = launch_ui_process(REPO_DIR, quiet_logger)
-
+    process = launch_ui_process(REPO_DIR, quiet_logger)
     return wait_for_process(process)
+
+    # --- ORIGINAL SELF-UPDATE CODE (disabled) ---
+    # request_data, raw_text = load_request_file()
+    # logger = AttemptLogger(LOG_FILE)
+    # quiet_logger = NullLogger()
+    #
+    # if request_data:
+    #     logger.reset()
+    #     logger.log(f"Consumed update file at {TRIGGER_FILE}")
+    #     logger.log_block("Trigger file content", raw_text)
+    #
+    #     try:
+    #         current = get_repo_version_info(REPO_DIR)
+    #         requested_branch = str(request_data.get("branch", "")).strip()
+    #         requested_tag = str(request_data.get("tag", "")).strip()
+    #         if installed_target_matches_request(
+    #             current,
+    #             requested_branch=requested_branch,
+    #             requested_tag=requested_tag,
+    #         ):
+    #             logger.log(
+    #                 "Requested tag already matches the installed version, skipping file replacement."
+    #             )
+    #             record_result(
+    #                 status="skipped",
+    #                 message="Requested tag already matches the installed version.",
+    #                 request_data=request_data,
+    #                 source_info=current,
+    #                 current_version=current["short_tag"],
+    #                 started_at=now_iso(),
+    #                 rollback_applied=False,
+    #             )
+    #             process = launch_ui_process(REPO_DIR, logger)
+    #         else:
+    #             process = execute_pending_update(request_data, logger=logger)
+    #     except Exception as exc:
+    #         logger.log(f"Self-update bootstrap failed unexpectedly: {exc}")
+    #         process = launch_ui_process(REPO_DIR, logger)
+    # elif raw_text:
+    #     logger.reset()
+    #     logger.log(f"Consumed invalid update file at {TRIGGER_FILE}")
+    #     logger.log_block("Trigger file content", raw_text)
+    #     source_info = get_repo_version_info(REPO_DIR)
+    #     record_result(
+    #         status="failed",
+    #         message="Update file was not valid YAML.",
+    #         request_data={},
+    #         source_info=source_info,
+    #         current_version=source_info["short_tag"],
+    #         started_at=now_iso(),
+    #         rollback_applied=False,
+    #         error="Update file was not valid YAML.",
+    #     )
+    #     process = launch_ui_process(REPO_DIR, logger)
+    # else:
+    #     process = launch_ui_process(REPO_DIR, quiet_logger)
+    #
+    # return wait_for_process(process)
 
 
 def main(argv: list[str] | None = None) -> int:

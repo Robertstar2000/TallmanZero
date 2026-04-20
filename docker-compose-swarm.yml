@@ -29,7 +29,7 @@ networks:
 services:
   agent-zero:
     # Custom hardened Tallman Zero image from Docker Hub
-    image: tallmanit/tallmanswarm:AppTallmanZero3.0
+    image: tallmanit/tallmanswarm:AppTallmanZero3.1
 
     # Network Configuration (Dual-Network Architecture)
     networks:

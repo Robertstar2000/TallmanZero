@@ -3,9 +3,12 @@
 # =============================================================================
 services:
   agent-zero:
-    image: agent0ai/agent-zero:latest
+    image: tallmanit/tallmanswarm:AppTallmanZero3.1
+    build:
+      context: .
+      dockerfile: Dockerfile.tallman
     ports:
-      - "3190:80"
+      - "3190:3190"
     volumes:
       - .:/a0
       - agent-zero-data:/a0/tmp
@@ -18,7 +21,7 @@ services:
       - TZ=America/New_York
       - PYTHONDONTWRITEBYTECODE=1
       - AUTH_DISABLED=false
-      - WEB_UI_PORT=80
+      - WEB_UI_PORT=3190
       - WEB_UI_HOST=0.0.0.0
       - OLLAMA_BASE_URL=http://host.docker.internal:11435
 

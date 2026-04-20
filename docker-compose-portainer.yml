@@ -13,7 +13,7 @@ networks:
 
 services:
   agent-zero:
-    image: agent0ai/agent-zero:latest
+    image: tallmanit/tallmanswarm:AppTallmanZero3.1
     networks:
       - agentzero_traefik
       - agentzero_internal
