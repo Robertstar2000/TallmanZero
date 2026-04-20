@@ -16,10 +16,10 @@
 # =============================================================================
 
 networks:
-  # Dedicated Traefik network for this stack (Network Isolation Protocol)
-  agentzero_traefik:
-    driver: overlay
-    attachable: true
+  # Shared Traefik network - must be external so Traefik (infra stack) can reach this service
+  traefik:
+    external: true
+    name: infra_traefik
 
   # Internal network for inter-container communication
   agentzero_internal:
@@ -33,7 +33,7 @@ services:
 
     # Network Configuration (Dual-Network Architecture)
     networks:
-      - agentzero_traefik   # For Traefik routing
+      - traefik           # External infra_traefik - Traefik routes via this
       - agentzero_internal  # For internal services
 
     # Persistent Volume Mounts (NFS shared storage on 10.10.20.64)
@@ -106,8 +106,8 @@ services:
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie=true"
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie.name=agentzero_session"
 
-        # Network for Traefik Communication (follows swarm naming: <stackname>_<networkname>)
-        - "traefik.docker.network=agentzero_agentzero_traefik"
+        # Network for Traefik Communication (must match the external infra_traefik network)
+        - "traefik.swarm.network=infra_traefik"
 
         # Health Check
         - "traefik.http.services.agentzero.loadbalancer.healthcheck.path=/"

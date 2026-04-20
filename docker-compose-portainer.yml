@@ -1,10 +1,10 @@
 version: '3.8'
 
 networks:
-  # Dedicated network for Traefik to securely expose this service
-  agentzero_traefik:
-    driver: overlay
-    attachable: true
+  # Shared Traefik network (external - owned by the infra stack)
+  traefik:
+    external: true
+    name: infra_traefik
 
   # Internal network for the app components
   agentzero_internal:
@@ -15,7 +15,7 @@ services:
   agent-zero:
     image: tallmanit/tallmanswarm:AppTallmanZero3.1
     networks:
-      - agentzero_traefik
+      - traefik           # External infra_traefik - Traefik routes via this
       - agentzero_internal
     volumes:
       # Primary data volume
@@ -64,7 +64,7 @@ services:
         # IMPORTANT: This matches <stack_name>_<network_name>
         # Below assumes you name the stack "agentzero" in Portainer. 
         # If your stack is named "agent", update this to "agent_agentzero_traefik"
-        - "traefik.swarm.network=agentzero_agentzero_traefik"
+        - "traefik.swarm.network=infra_traefik"
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3190/"]
