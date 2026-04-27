@@ -17,6 +17,7 @@ COPY ./plugins /a0/plugins
 COPY ./agent.py /a0/agent.py
 COPY ./models.py /a0/models.py
 COPY ./initialize.py /a0/initialize.py
+COPY ./changes-manifest.md /a0/changes-manifest.md
 
 # Override self_update_manager to use port 3190 instead of 80
 # (Port 80 conflicts with Traefik in Docker Swarm)
