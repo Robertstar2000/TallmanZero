@@ -2,7 +2,7 @@ allow_chat_override: false
 
 chat_model:
   provider: "ollama"
-  name: "gemma4:31b"
+  name: "gemma4:26b"
   api_base: "http://10.10.20.60:11434"
   ctx_length: 100000
   ctx_history: 0.7
@@ -15,7 +15,7 @@ chat_model:
 
 utility_model:
   provider: "ollama"
-  name: "gemma4:31b"
+  name: "gemma4:26b"
   api_base: "http://10.10.20.60:11434"
   ctx_length: 100000
   ctx_input: 0.7

@@ -27,7 +27,7 @@ This document tracks the modifications made to the base Agent Zero platform to c
 - **System Integration**: Configured the agent to prioritize these documents when answering equipment-related queries.
 
 ## 4. Default LLM Configuration
-- **Model**: Hardcoded **Ollama gemma4:31b** as the immutable system-wide model for both Main and Utility tasks.
+- **Model**: Hardcoded **Ollama gemma4:26b** as the immutable system-wide model for both Main and Utility tasks.
 - **Context Length**: Configured to **100,000 tokens** to support extensive document processing and long-term reasoning.
 - **Instance**: Hardcoded to connect strictly to the internal Ollama server via `http://10.10.20.60:11434`.
 - **UI Lockdown**: Completely removed the per-chat model switcher interface and disabled the "Models" configuration tab in Agent Settings. The `allow_chat_override` flag was disabled to prevent user overrides.
