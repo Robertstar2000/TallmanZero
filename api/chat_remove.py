@@ -8,13 +8,19 @@ class RemoveChat(ApiHandler):
     async def process(self, input: Input, request: Request) -> Output:
         ctxid = input.get("context", "")
 
+        # Verify ownership: use_context checks user_id, create_if_not_exists=False
+        # prevents creating a new context if the user doesn't own this one.
+        from helpers.login import get_current_user_id
+        user_id = get_current_user_id()
+        context = AgentContext.get(ctxid, user_id=user_id)
+        if not context:
+            return {"message": "Context not found or access denied."}
+
         scheduler = TaskScheduler.get()
         scheduler.cancel_tasks_by_context(ctxid, terminate_thread=True)
 
-        context = AgentContext.use(ctxid)
-        if context:
-            # stop processing any tasks
-            context.reset()
+        # stop processing any tasks
+        context.reset()
 
         AgentContext.remove(ctxid)
         persist_chat.remove_chat(ctxid)
@@ -32,3 +38,4 @@ class RemoveChat(ApiHandler):
         return {
             "message": "Context removed.",
         }
+

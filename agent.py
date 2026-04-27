@@ -177,7 +177,15 @@ class AgentContext:
             context = AgentContext._contexts.pop(id, None)
         if context and context.task:
             context.task.kill()
+        # Clean up DB mapping
+        try:
+            from helpers import db
+            database = db.get_database()
+            database.run("DELETE FROM user_contexts WHERE ctxid = ?", [id])
+        except Exception:
+            pass  # DB cleanup is best-effort
         return context
+
 
     def get_data(self, key: str, recursive: bool = True):
         # recursive is not used now, prepared for context hierarchy

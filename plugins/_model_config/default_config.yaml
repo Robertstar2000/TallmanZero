@@ -1,4 +1,4 @@
-allow_chat_override: true
+allow_chat_override: false
 
 chat_model:
   provider: "ollama"

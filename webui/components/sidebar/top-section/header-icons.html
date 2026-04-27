@@ -24,9 +24,9 @@
       <div id="logo-bar">
         <a href="https://github.com/agent0ai/agent-zero" target="_blank" rel="noopener noreferrer" aria-label="Agent Zero on GitHub">
           <div class="logo-container">
-            <span id="a0-logo" class="logo-expanded" role="img" aria-label="Agent Zero"></span>
-            <!-- Placeholder for the single 'A' logo asset -->
-            <span id="a0-logo-collapsed" class="logo-collapsed" role="img" aria-label="Agent Zero"></span>
+            <span id="a0-logo" class="logo-expanded" aria-label="Tallman Zero">TALLMAN ZERO</span>
+            <!-- Placeholder for the single 'T' logo asset -->
+            <span id="a0-logo-collapsed" class="logo-collapsed" aria-label="Tallman Zero">TZ</span>
           </div>
         </a>
       </div>
@@ -196,34 +196,28 @@
       position: absolute;
       top: 0; left: 8px;
       height: 100%;
-      -webkit-mask-repeat: no-repeat;
-      mask-repeat: no-repeat;
-      background-color: var(--color-text);
+      color: var(--color-text);
+      display: flex;
+      align-items: center;
       transition: opacity 0.3s ease;
+      font-weight: 700;
+      letter-spacing: 0.05em;
     }
 
     /* Expanded wordmark logo */
     #a0-logo {
       width: 100%;
       left: 8px;
-      -webkit-mask-image: url(/public/a0-fullDark.svg);
-      mask-image: url(/public/a0-fullDark.svg);
-      -webkit-mask-size: contain;
-      mask-size: contain;
-      -webkit-mask-position: left center;
-      mask-position: left center;
+      font-size: 1.05rem;
+      white-space: nowrap;
       opacity: 0;
     }
 
     /* Collapsed symbol logo placeholder */
     #a0-logo-collapsed {
       width: 2.0rem; /* Scale to fit nicely above hamburger */
-      -webkit-mask-image: url(/public/a0-collapsed.svg);
-      mask-image: url(/public/a0-collapsed.svg);
-      -webkit-mask-size: contain;
-      mask-size: contain;
-      -webkit-mask-position: left center;
-      mask-position: left center;
+      font-size: 1.2rem;
+      justify-content: center;
       opacity: 0.8;
     }
 

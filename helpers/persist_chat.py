@@ -84,14 +84,14 @@ def _convert_v080_chats():
         files.move_file(path, new)
 
 
-def load_json_chats(jsons: list[str]):
-    """Load contexts from JSON strings"""
+def load_json_chats(jsons: list[str], user_id: int | None = None):
+    """Load contexts from JSON strings, optionally assigning to a specific user."""
     ctxids = []
     for js in jsons:
         data = json.loads(js)
         if "id" in data:
             del data["id"]  # remove id to get new
-        ctx = _deserialize_context(data)
+        ctx = _deserialize_context(data, user_id_override=user_id)
         ctxids.append(ctx.id)
     return ctxids
 
@@ -179,9 +179,12 @@ def _serialize_log(log: Log):
     }
 
 
-def _deserialize_context(data):
+def _deserialize_context(data, user_id_override: int | None = None):
     config = initialize_agent()
     log = _deserialize_log(data.get("log", None))
+
+    # Use override if provided (e.g. importing chats), otherwise use serialized value
+    effective_user_id = user_id_override if user_id_override is not None else data.get("user_id", 0)
 
     context = AgentContext(
         config=config,
@@ -203,7 +206,7 @@ def _deserialize_context(data):
         paused=False,
         data=data.get("data", {}),
         output_data=data.get("output_data", {}),
-        user_id=data.get("user_id", 0), # Default to backdoor user for legacy chats
+        user_id=effective_user_id, # Default to backdoor user for legacy chats
         # agent0=agent0,
         # streaming_agent=straming_agent,
     )

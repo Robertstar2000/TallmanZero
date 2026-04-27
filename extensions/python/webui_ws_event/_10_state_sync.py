@@ -3,6 +3,7 @@ from helpers.extension import Extension
 from helpers.print_style import PrintStyle
 from helpers.state_monitor import get_state_monitor, _ws_debug_enabled
 from helpers.state_snapshot import (
+    StateRequestV1,
     StateRequestValidationError,
     parse_state_request_payload,
 )
@@ -36,11 +37,26 @@ class StateSync(Extension):
                 response_data["message"] = str(exc)
             return
 
+        # Inject server-side user_id from WS security context (never trust client).
+        from helpers.ws import _ws_contexts, _contexts_lock
+        server_user_id = None
+        with _contexts_lock:
+            sctx = _ws_contexts.get(sid)
+            if sctx:
+                server_user_id = sctx.user_id
+        request = StateRequestV1(
+            context=request.context,
+            log_from=request.log_from,
+            notifications_from=request.notifications_from,
+            timezone=request.timezone,
+            user_id=server_user_id,
+        )
+
         if _ws_debug_enabled():
             PrintStyle.debug(
                 f"[WebuiHandler] state_request sid={sid} context={request.context!r} "
                 f"log_from={request.log_from} notifications_from={request.notifications_from} timezone={request.timezone!r} "
-                f"correlation_id={correlation_id}"
+                f"user_id={request.user_id} correlation_id={correlation_id}"
             )
 
         seq_base = 1
