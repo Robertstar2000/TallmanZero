@@ -62,12 +62,35 @@ class AgentContext:
         data: dict | None = None,
         output_data: dict | None = None,
         set_current: bool = False,
+        user_id: int | None = None,
     ):
         # initialize context
         self.id = id or AgentContext.generate_id()
+        existing_mapping = None
+        if user_id is not None:
+            from helpers import db
+
+            database = db.get_database()
+            existing_mapping = database.get(
+                "SELECT * FROM user_contexts WHERE ctxid = ?",
+                [self.id],
+            )
+            if existing_mapping and existing_mapping.get("user_id") != user_id:
+                raise PermissionError(
+                    f"Context {self.id} belongs to a different user."
+                )
         existing = None
         with AgentContext._contexts_lock:
             existing = AgentContext._contexts.get(self.id, None)
+            if (
+                existing
+                and existing.user_id != user_id
+                and existing.user_id is not None
+                and user_id is not None
+            ):
+                raise PermissionError(
+                    f"Context {self.id} belongs to a different user."
+                )
             if existing:
                 AgentContext._contexts.pop(self.id, None)
             AgentContext._contexts[self.id] = self
@@ -91,18 +114,33 @@ class AgentContext:
         AgentContext._counter += 1
         self.no = AgentContext._counter
         self.last_message = last_message or datetime.now(timezone.utc)
+        self.user_id = user_id
+        
+        # ensure mapped in DB if we have a user
+        if self.user_id is not None:
+            from helpers import db
+
+            database = db.get_database()
+            if not existing_mapping:
+                database.run(
+                    "INSERT INTO user_contexts (ctxid, user_id) VALUES (?, ?)",
+                    [self.id, self.user_id],
+                )
 
         # initialize agent at last (context is complete now)
         self.agent0 = agent0 or Agent(0, self.config, self)
 
     @staticmethod
-    def get(id: str):
+    def get(id: str, user_id: int | None = None):
         with AgentContext._contexts_lock:
-            return AgentContext._contexts.get(id, None)
+            ctx = AgentContext._contexts.get(id, None)
+            if ctx and user_id is not None and ctx.user_id != user_id:
+                return None
+            return ctx
 
     @staticmethod
-    def use(id: str):
-        context = AgentContext.get(id)
+    def use(id: str, user_id: int | None = None):
+        context = AgentContext.get(id, user_id)
         if context:
             AgentContext.set_current(id)
         else:
@@ -110,27 +148,32 @@ class AgentContext:
         return context
 
     @staticmethod
-    def current():
+    def current(user_id: int | None = None):
         ctxid = context_helper.get_context_data("agent_context_id", "")
         if not ctxid:
             return None
-        return AgentContext.get(ctxid)
+        return AgentContext.get(ctxid, user_id)
 
     @staticmethod
     def set_current(ctxid: str):
         context_helper.set_context_data("agent_context_id", ctxid)
 
     @staticmethod
-    def first():
+    def first(user_id: int | None = None):
         with AgentContext._contexts_lock:
             if not AgentContext._contexts:
                 return None
-            return list(AgentContext._contexts.values())[0]
+            for ctx in AgentContext._contexts.values():
+                if user_id is None or ctx.user_id == user_id:
+                    return ctx
+            return None
 
     @staticmethod
-    def all():
+    def all(user_id: int | None = None):
         with AgentContext._contexts_lock:
-            return list(AgentContext._contexts.values())
+            if user_id is None:
+                return list(AgentContext._contexts.values())
+            return [ctx for ctx in AgentContext._contexts.values() if ctx.user_id == user_id]
 
     @staticmethod
     def generate_id():

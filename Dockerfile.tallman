@@ -1,0 +1,31 @@
+# =============================================================================
+# Tallman Zero - Custom Swarm Image
+# =============================================================================
+# This Dockerfile bakes local changes (UI, Knowledge) into the official image
+# for deployment on the Tallman Docker Swarm.
+# =============================================================================
+
+FROM agent0ai/agent-zero:latest
+
+# Copy updated Web UI
+COPY ./webui /a0/webui
+
+# Copy updated Backend Code
+COPY ./api /a0/api
+COPY ./extensions /a0/extensions
+COPY ./helpers /a0/helpers
+COPY ./plugins /a0/plugins
+COPY ./agent.py /a0/agent.py
+COPY ./models.py /a0/models.py
+COPY ./initialize.py /a0/initialize.py
+
+# Copy persistent Knowledge files
+COPY ./knowledge /a0/knowledge
+
+# Ensure permissions are correct
+RUN chmod -R 755 /a0/webui /a0/knowledge /a0/extensions
+
+# Metadata
+LABEL maintainer="Tallman Equipment"
+LABEL version="1.1.0"
+LABEL description="Tallman Zero - Agentic AI Orchestration Platform"

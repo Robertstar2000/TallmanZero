@@ -485,7 +485,7 @@ def get_default_settings() -> Settings:
         variables="",
         secrets="",
         litellm_global_kwargs=get_default_value("litellm_global_kwargs", {}),
-        update_check_enabled=get_default_value("update_check_enabled", True),
+        update_check_enabled=get_default_value("update_check_enabled", False),
         chat_inherit_project=get_default_value("chat_inherit_project", True),
     )
 

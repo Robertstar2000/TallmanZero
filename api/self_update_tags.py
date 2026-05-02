@@ -6,6 +6,18 @@ from helpers import self_update
 
 class SelfUpdateTags(ApiHandler):
     async def process(self, input: dict, request: Request) -> dict | Response:
+        supported = runtime.is_dockerized() and self_update.is_self_update_enabled()
+        if not supported:
+            return {
+                "success": True,
+                "supported": False,
+                "branch": "",
+                "tags": [],
+                "tag_options": [],
+                "higher_major_versions": [],
+                "error": self_update.get_self_update_disabled_reason(),
+            }
+
         branch = str(input.get("branch", "")).strip().lower()
         current_branch = self_update.get_repo_version_info().get("branch", "").strip().lower()
         available_branch_values = self_update.get_available_branch_values()
@@ -25,7 +37,7 @@ class SelfUpdateTags(ApiHandler):
             )
             return {
                 "success": True,
-                "supported": runtime.is_dockerized(),
+                "supported": supported,
                 "branch": resolved_branch,
                 "tags": [option["value"] for option in tag_options],
                 "tag_options": tag_options,
@@ -35,7 +47,7 @@ class SelfUpdateTags(ApiHandler):
         except Exception as e:
             return {
                 "success": False,
-                "supported": runtime.is_dockerized(),
+                "supported": supported,
                 "branch": resolved_branch,
                 "tags": [],
                 "tag_options": [],

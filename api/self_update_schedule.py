@@ -6,6 +6,12 @@ from helpers import self_update
 
 class SelfUpdateSchedule(ApiHandler):
     async def process(self, input: dict, request: Request) -> dict | Response:
+        if not self_update.is_self_update_enabled():
+            return {
+                "success": False,
+                "error": self_update.get_self_update_disabled_reason(),
+            }
+
         if not runtime.is_dockerized():
             return {
                 "success": False,

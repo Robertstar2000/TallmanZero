@@ -1,7 +1,7 @@
 from helpers import notification
 from helpers.extension import Extension
 from agent import LoopData
-from helpers import settings, update_check
+from helpers import settings, self_update, update_check
 import datetime
 
 
@@ -24,6 +24,9 @@ class UpdateCheck(Extension):
 
         try:
             global last_check, last_notification_id, last_notification_time
+
+            if not self_update.is_self_update_enabled():
+                return
             
             # first check if update check is enabled
             current_settings = settings.get_settings()

@@ -25,6 +25,7 @@ BACKUP_CONFLICT_POLICIES = {"rename", "overwrite", "fail"}
 MIN_SELECTOR_VERSION = (1, 0)
 REMOTE_BRANCH_TAG_CACHE_TTL_SECONDS = 60.0
 REMOTE_BRANCH_LIST_CACHE_TTL_SECONDS = 60.0
+SELF_UPDATE_DISABLED_ENV = "TALLMAN_DISABLE_SELF_UPDATE"
 
 UPDATE_FILE_PATH = Path("/exe/a0-self-update.yaml")
 STATUS_FILE_PATH = Path("/exe/a0-self-update-status.yaml")
@@ -70,6 +71,18 @@ class UpdateStatus(TypedDict, total=False):
 class SelectorTagOption(TypedDict):
     value: str
     label: str
+
+
+def is_self_update_enabled() -> bool:
+    disabled = os.getenv(SELF_UPDATE_DISABLED_ENV, "true").strip().lower()
+    return disabled not in {"1", "true", "yes", "on"}
+
+
+def get_self_update_disabled_reason() -> str:
+    return (
+        "Self-update is disabled in this TallmanZero build because newer upstream "
+        "updates are not compatible with this packaged version."
+    )
 
 
 def _now_iso() -> str:

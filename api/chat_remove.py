@@ -7,17 +7,19 @@ from helpers.task_scheduler import TaskScheduler
 class RemoveChat(ApiHandler):
     async def process(self, input: Input, request: Request) -> Output:
         ctxid = input.get("context", "")
+        try:
+            context = self.use_context(ctxid, create_if_not_exists=False)
+        except Exception:
+            return Response("Context not found", status=404)
 
         scheduler = TaskScheduler.get()
         scheduler.cancel_tasks_by_context(ctxid, terminate_thread=True)
 
-        context = AgentContext.use(ctxid)
-        if context:
-            # stop processing any tasks
-            context.reset()
+        # stop processing any tasks
+        context.reset()
 
         AgentContext.remove(ctxid)
-        persist_chat.remove_chat(ctxid)
+        persist_chat.remove_chat(ctxid, user_id=context.user_id)
 
         await scheduler.reload()
 

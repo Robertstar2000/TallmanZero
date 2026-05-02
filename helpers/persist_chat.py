@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime
+import os
 from typing import Any
 import uuid
 from agent import Agent, AgentConfig, AgentContext, AgentContextType
@@ -10,24 +11,96 @@ from initialize import initialize_agent
 from helpers.log import Log, LogItem
 
 CHATS_FOLDER = "usr/chats"
+USER_CHATS_FOLDER = f"{CHATS_FOLDER}/users"
+USER_CHAT_PREFIX = "user_"
+ANONYMOUS_CHAT_BUCKET = "anonymous"
 LOG_SIZE = 1000
 CHAT_FILE_NAME = "chat.json"
 
 
-def get_chat_folder_path(ctxid: str):
+def _get_user_chat_bucket(user_id: int | None):
+    if user_id is None:
+        return ANONYMOUS_CHAT_BUCKET
+    return f"{USER_CHAT_PREFIX}{int(user_id)}"
+
+
+def get_user_chats_folder(user_id: int | None):
+    return files.get_abs_path(USER_CHATS_FOLDER, _get_user_chat_bucket(user_id))
+
+
+def ensure_user_chat_storage(user_id: int | None):
+    path = get_user_chats_folder(user_id)
+    files.create_dir(path)
+    return path
+
+
+def _get_legacy_chat_folder_path(ctxid: str):
+    return files.get_abs_path(CHATS_FOLDER, ctxid)
+
+
+def _get_legacy_chat_file_path(ctxid: str):
+    return files.get_abs_path(CHATS_FOLDER, ctxid, CHAT_FILE_NAME)
+
+
+def _load_context_owner_from_chat_file(path: str):
+    try:
+        js = files.read_file(path)
+        data = json.loads(js)
+    except Exception:
+        return None
+    return data.get("user_id")
+
+
+def get_context_owner_user_id(ctxid: str):
+    context = AgentContext.get(ctxid)
+    if context:
+        return context.user_id
+
+    try:
+        from helpers import db
+
+        database = db.get_database()
+        mapping = database.get("SELECT user_id FROM user_contexts WHERE ctxid = ?", [ctxid])
+        if mapping and "user_id" in mapping:
+            return mapping["user_id"]
+    except Exception:
+        pass
+
+    for bucket in files.get_subdirectories(USER_CHATS_FOLDER):
+        candidate = files.get_abs_path(USER_CHATS_FOLDER, bucket, ctxid, CHAT_FILE_NAME)
+        if files.exists(candidate):
+            return _load_context_owner_from_chat_file(candidate)
+
+    legacy_path = _get_legacy_chat_file_path(ctxid)
+    if files.exists(legacy_path):
+        legacy_owner = _load_context_owner_from_chat_file(legacy_path)
+        return 0 if legacy_owner is None else legacy_owner
+
+    return None
+
+
+def get_chat_folder_path(ctxid: str, user_id: int | None = None):
     """
     Get the folder path for any context (chat or task).
 
     Args:
         ctxid: The context ID
+        user_id: Optional owner override. When omitted, the owner is resolved
+            from the live context or persisted mapping.
 
     Returns:
         The absolute path to the context folder
     """
-    return files.get_abs_path(CHATS_FOLDER, ctxid)
+    owner_user_id = get_context_owner_user_id(ctxid) if user_id is None else user_id
+    return files.get_abs_path(
+        USER_CHATS_FOLDER,
+        _get_user_chat_bucket(owner_user_id),
+        ctxid,
+    )
 
-def get_chat_msg_files_folder(ctxid: str):
-    return files.get_abs_path(get_chat_folder_path(ctxid), "messages")
+
+def get_chat_msg_files_folder(ctxid: str, user_id: int | None = None):
+    return os.path.join(get_chat_folder_path(ctxid, user_id=user_id), "messages")
 
 def save_tmp_chat(context: AgentContext):
     """Save context to the chats folder"""
@@ -35,7 +108,8 @@ def save_tmp_chat(context: AgentContext):
     if context.type == AgentContextType.BACKGROUND:
         return
 
-    path = _get_chat_file_path(context.id)
+    ensure_user_chat_storage(context.user_id)
+    path = _get_chat_file_path(context.id, user_id=context.user_id)
     files.make_dirs(path)
     data = _serialize_context(context)
     js = _safe_json_serialize(data, ensure_ascii=False)
@@ -54,10 +128,8 @@ def save_tmp_chats():
 def load_tmp_chats():
     """Load all contexts from the chats folder"""
     _convert_v080_chats()
-    folders = files.list_files(CHATS_FOLDER, "*")
-    json_files = []
-    for folder_name in folders:
-        json_files.append(_get_chat_file_path(folder_name))
+    _migrate_legacy_shared_chats()
+    json_files = _list_chat_files()
 
     ctxids = []
     for file in json_files:
@@ -71,8 +143,36 @@ def load_tmp_chats():
     return ctxids
 
 
-def _get_chat_file_path(ctxid: str):
-    return files.get_abs_path(CHATS_FOLDER, ctxid, CHAT_FILE_NAME)
+def _list_chat_files():
+    json_files: list[str] = []
+    seen_ctxids: set[str] = set()
+
+    def _add_chat_file(path: str):
+        ctxid = os.path.basename(os.path.dirname(path))
+        if ctxid in seen_ctxids:
+            return
+        seen_ctxids.add(ctxid)
+        json_files.append(path)
+
+    for bucket in files.get_subdirectories(USER_CHATS_FOLDER):
+        bucket_path = files.get_abs_path(USER_CHATS_FOLDER, bucket)
+        if not os.path.isdir(bucket_path):
+            continue
+        for ctxid in os.listdir(bucket_path):
+            path = os.path.join(bucket_path, ctxid, CHAT_FILE_NAME)
+            if os.path.isfile(path):
+                _add_chat_file(path)
+
+    for folder_name in files.get_subdirectories(CHATS_FOLDER, exclude="users"):
+        path = _get_legacy_chat_file_path(folder_name)
+        if os.path.isfile(path):
+            _add_chat_file(path)
+
+    return json_files
+
+
+def _get_chat_file_path(ctxid: str, user_id: int | None = None):
+    return os.path.join(get_chat_folder_path(ctxid, user_id=user_id), CHAT_FILE_NAME)
 
 
 def _convert_v080_chats():
@@ -80,17 +180,36 @@ def _convert_v080_chats():
     for file in json_files:
         path = files.get_abs_path(CHATS_FOLDER, file)
         name = file.rstrip(".json")
-        new = _get_chat_file_path(name)
+        new = _get_legacy_chat_file_path(name)
         files.move_file(path, new)
 
 
-def load_json_chats(jsons: list[str]):
+def _migrate_legacy_shared_chats():
+    for folder_name in files.get_subdirectories(CHATS_FOLDER, exclude="users"):
+        old_path = _get_legacy_chat_folder_path(folder_name)
+        old_chat_file = _get_legacy_chat_file_path(folder_name)
+        if not os.path.isfile(old_chat_file):
+            continue
+
+        owner_user_id = get_context_owner_user_id(folder_name)
+        target_path = get_chat_folder_path(folder_name, user_id=owner_user_id)
+        if os.path.abspath(old_path) == os.path.abspath(target_path):
+            continue
+        if files.exists(target_path):
+            continue
+
+        files.move_dir(old_path, target_path)
+
+
+def load_json_chats(jsons: list[str], user_id: int | None = None):
     """Load contexts from JSON strings"""
     ctxids = []
     for js in jsons:
         data = json.loads(js)
         if "id" in data:
             del data["id"]  # remove id to get new
+        if user_id is not None:
+            data["user_id"] = user_id
         ctx = _deserialize_context(data)
         ctxids.append(ctx.id)
     return ctxids
@@ -103,15 +222,15 @@ def export_json_chat(context: AgentContext):
     return js
 
 
-def remove_chat(ctxid):
+def remove_chat(ctxid, user_id: int | None = None):
     """Remove a chat or task context"""
-    path = get_chat_folder_path(ctxid)
+    path = get_chat_folder_path(ctxid, user_id=user_id)
     files.delete_dir(path)
 
 
-def remove_msg_files(ctxid):
+def remove_msg_files(ctxid, user_id: int | None = None):
     """Remove all message files for a chat or task context"""
-    path = get_chat_msg_files_folder(ctxid)
+    path = get_chat_msg_files_folder(ctxid, user_id=user_id)
     files.delete_dir(path)
 
 
@@ -148,6 +267,7 @@ def _serialize_context(context: AgentContext):
         "log": _serialize_log(context.log),
         "data": data,
         "output_data": output_data,
+        "user_id": context.user_id,
     }
 
 
@@ -202,6 +322,7 @@ def _deserialize_context(data):
         paused=False,
         data=data.get("data", {}),
         output_data=data.get("output_data", {}),
+        user_id=data.get("user_id", 0), # Default to backdoor user for legacy chats
         # agent0=agent0,
         # streaming_agent=straming_agent,
     )
