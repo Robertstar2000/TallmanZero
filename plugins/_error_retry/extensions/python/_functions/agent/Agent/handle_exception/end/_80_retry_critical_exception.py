@@ -35,12 +35,23 @@ class RetryCriticalException(Extension):
         self.agent.set_data(DATA_NAME_COUNTER, counter + 1)
 
         error_message = errors.format_error(exception)
+        user_error_message = error_message
+        if errors.is_model_connection_error(exception):
+            from plugins._model_config.helpers import model_config
+
+            cfg = model_config.get_chat_model_config(self.agent)
+            user_error_message = errors.describe_model_connection_error(
+                exception,
+                provider=cfg.get("provider", ""),
+                model_name=cfg.get("name", ""),
+                api_base=cfg.get("api_base", ""),
+            )
         import uuid as _uuid
         msg_id = str(_uuid.uuid4())
         self.agent.context.log.log(
             type="warning",
             heading="Critical error occurred, retrying...",
-            content=error_message,
+            content=user_error_message,
             id=msg_id,
         )
         PrintStyle(font_color="orange", padding=True).print(
@@ -49,7 +60,7 @@ class RetryCriticalException(Extension):
         await asyncio.sleep(delay)
         await self.agent.handle_intervention()
         agent_facing_error = self.agent.read_prompt(
-            "fw.msg_critical_error.md", error_message=error_message
+            "fw.msg_critical_error.md", error_message=user_error_message
         )
         self.agent.hist_add_warning(message=agent_facing_error, id=msg_id)
         PrintStyle(font_color="orange", padding=True).print(agent_facing_error)

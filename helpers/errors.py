@@ -4,6 +4,28 @@ import asyncio
 from typing import Literal
 
 
+_MODEL_ERROR_MARKERS = (
+    "litellm",
+    "ollama",
+    "apiconnectionerror",
+    "openai",
+)
+_CONNECTION_ERROR_MARKERS = (
+    "cannot connect to host",
+    "connect call failed",
+    "connection refused",
+    "connection reset by peer",
+    "network is unreachable",
+    "no route to host",
+    "temporary failure in name resolution",
+    "name or service not known",
+    "timed out",
+)
+_URL_RE = re.compile(r"https?://[^\s,\]]+")
+_HOST_RE = re.compile(r"cannot connect to host\s+([^\s]+)", re.IGNORECASE)
+_SOCKET_RE = re.compile(r"connect call failed\s+\('([^']+)',\s*(\d+)\)", re.IGNORECASE)
+
+
 def handle_error(e: Exception):
     # if asyncio.CancelledError, re-raise
     if isinstance(e, asyncio.CancelledError):
@@ -12,6 +34,62 @@ def handle_error(e: Exception):
 
 def error_text(e: Exception):
     return str(e)
+
+
+def is_connection_error(e: BaseException) -> bool:
+    if isinstance(e, asyncio.CancelledError):
+        return False
+
+    type_text = f"{type(e).__module__}.{type(e).__qualname__}".lower()
+    if any(marker in type_text for marker in ("apiconnectionerror", "connecterror", "clientconnectorerror")):
+        return True
+
+    message = str(e).lower()
+    return any(marker in message for marker in _CONNECTION_ERROR_MARKERS)
+
+
+def is_model_connection_error(e: BaseException) -> bool:
+    if not is_connection_error(e):
+        return False
+
+    type_text = f"{type(e).__module__}.{type(e).__qualname__}".lower()
+    message = str(e).lower()
+    return any(marker in type_text or marker in message for marker in _MODEL_ERROR_MARKERS)
+
+
+def extract_connection_target(e: BaseException) -> str | None:
+    message = str(e)
+
+    if match := _URL_RE.search(message):
+        return match.group(0).rstrip(".,)")
+    if match := _HOST_RE.search(message):
+        return match.group(1).rstrip(".,)")
+    if match := _SOCKET_RE.search(message):
+        return f"{match.group(1)}:{match.group(2)}"
+
+    return None
+
+
+def describe_model_connection_error(
+    e: BaseException,
+    *,
+    provider: str = "",
+    model_name: str = "",
+    api_base: str = "",
+) -> str:
+    endpoint = (api_base or "").strip() or extract_connection_target(e) or "the configured model endpoint"
+    model_ref = "/".join(part for part in [provider.strip(), model_name.strip()] if part)
+
+    if model_ref:
+        return (
+            f"The configured model `{model_ref}` is unreachable from this container at "
+            f"`{endpoint}`. Restore network access to that server and try again."
+        )
+
+    return (
+        f"The configured model endpoint is unreachable from this container: "
+        f"`{endpoint}`. Restore network access to that server and try again."
+    )
 
 
 def format_error(
