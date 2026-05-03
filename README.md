@@ -105,6 +105,13 @@ A detailed setup guide for Windows, macOS, and Linux can be found in the Agent Z
 - It uses the effective Main Model resolved by `_model_config`; there is no separate browser model slot.
 - Browser vision follows the Main Model's vision setting.
 - Playwright Chromium: **Docker** images ship the headless shell preinstalled. **Local development** installs it on first Browser Agent use via `ensure_playwright_binary()` in `plugins/_browser_agent/helpers/playwright.py` (into `tmp/playwright`); you can pre-install manually (see [Development Setup](docs/setup/dev-setup.md)) to skip the wait.
+- The core UI no longer depends on Browser Agent imports during startup. If the optional `browser_use` package is missing, Tallman Zero still boots, but Browser Agent features remain unavailable until that dependency is installed.
+
+### Default Model Endpoints
+
+- Chat and utility LLM traffic defaults to Ollama at `http://10.10.20.60:11434`.
+- Embeddings use the real local `sentence-transformers/all-MiniLM-L6-v2` model.
+- The Tallman Docker image preloads that sentence-transformers cache so embedding startup does not depend on a first-run download.
 
 4. **Completely Customizable and Extensible**
 

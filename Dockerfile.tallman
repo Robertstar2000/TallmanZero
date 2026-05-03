@@ -7,6 +7,9 @@
 
 FROM agent0ai/agent-zero:latest
 
+ENV HF_HOME=/opt/huggingface
+ENV SENTENCE_TRANSFORMERS_HOME=/opt/sentence_transformers
+
 # Copy updated Web UI
 COPY ./webui /a0/webui
 
@@ -22,8 +25,12 @@ COPY ./initialize.py /a0/initialize.py
 # Copy persistent Knowledge files
 COPY ./knowledge /a0/knowledge
 
+# Preload a real small local embedding model into the image.
+RUN mkdir -p "$HF_HOME" "$SENTENCE_TRANSFORMERS_HOME" \
+    && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2', cache_folder='/opt/sentence_transformers')"
+
 # Ensure permissions are correct
-RUN chmod -R 755 /a0/webui /a0/knowledge /a0/extensions
+RUN chmod -R 755 /a0/webui /a0/knowledge /a0/extensions /opt/huggingface /opt/sentence_transformers
 
 # Metadata
 LABEL maintainer="Tallman Equipment"

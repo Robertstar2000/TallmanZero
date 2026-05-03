@@ -1,4 +1,4 @@
-﻿from dataclasses import dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum
 import logging
 import os
@@ -19,13 +19,12 @@ import litellm
 import openai
 from litellm.types.utils import ModelResponse
 
-from python.helpers import dotenv
-from python.helpers import settings, dirty_json
-from python.helpers.dotenv import load_dotenv
-from python.helpers.providers import get_provider_config
-from python.helpers.rate_limiter import RateLimiter
-from python.helpers.tokens import approximate_tokens
-from python.helpers import dirty_json, browser_use_monkeypatch
+from helpers import dotenv
+from helpers import settings, dirty_json, browser_use_monkeypatch
+from helpers.dotenv import load_dotenv
+from helpers.providers import get_provider_config
+from helpers.rate_limiter import RateLimiter
+from helpers.tokens import approximate_tokens
 
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain_core.outputs.chat_generation import ChatGenerationChunk
@@ -48,7 +47,7 @@ from pydantic import ConfigDict
 def turn_off_logging():
     os.environ["LITELLM_LOG"] = "ERROR"  # only errors
     litellm.suppress_debug_info = True
-    # Silence **all** LiteLLM sub-loggers (utils, cost_calculatorâ€¦)
+    # Silence **all** LiteLLM sub-loggers (utils, cost_calculator…)
     for name in logging.Logger.manager.loggerDict:
         if name.lower().startswith("litellm"):
             logging.getLogger(name).setLevel(logging.ERROR)
@@ -62,6 +61,30 @@ browser_use_monkeypatch.apply()
 litellm.modify_params = True # helps fix anthropic tool calls by browser-use
 litellm.drop_params = True  # Drop unsupported params for GPT-5 compatibility
 
+_BROWSER_USE_IMPORT_ERROR: ModuleNotFoundError | None = None
+
+try:
+    from browser_use.llm import ChatOllama, ChatOpenRouter, ChatGoogle, ChatAnthropic, ChatGroq, ChatOpenAI
+
+    BROWSER_USE_AVAILABLE = True
+except ModuleNotFoundError as exc:
+    if exc.name and not exc.name.startswith("browser_use"):
+        raise
+    _BROWSER_USE_IMPORT_ERROR = exc
+    BROWSER_USE_AVAILABLE = False
+
+    class _BrowserUseUnavailableBase:
+        pass
+
+    ChatOllama = ChatOpenRouter = ChatGoogle = ChatAnthropic = ChatGroq = ChatOpenAI = _BrowserUseUnavailableBase  # type: ignore[assignment]
+
+
+def _raise_browser_use_unavailable() -> None:
+    raise ModuleNotFoundError(
+        "browser_use is not installed in this environment. "
+        "Tallman Zero can run without it, but the Browser Agent requires that package."
+    ) from _BROWSER_USE_IMPORT_ERROR
+
 class ModelType(Enum):
     CHAT = "Chat"
     EMBEDDING = "Embedding"
@@ -72,6 +95,7 @@ class ModelConfig:
     type: ModelType
     provider: str
     name: str
+    api_key: str = ""
     api_base: str = ""
     ctx_length: int = 0
     limit_requests: int = 0
@@ -84,6 +108,8 @@ class ModelConfig:
         kwargs = self.kwargs.copy() or {}
         if self.api_base and "api_base" not in kwargs:
             kwargs["api_base"] = self.api_base
+        if self.api_key and "api_key" not in kwargs:
+            kwargs["api_key"] = self.api_key
         return kwargs
 
 
@@ -580,9 +606,6 @@ class AsyncAIChatReplacement:
         self._wrapper = wrapper
         self.chat = AsyncAIChatReplacement._Chat(wrapper)
 
-
-from browser_use.llm import ChatOllama, ChatOpenRouter, ChatGoogle, ChatAnthropic, ChatGroq, ChatOpenAI
-
 class BrowserCompatibleChatWrapper(ChatOpenRouter):
     """
     A wrapper for browser agent that can filter/sanitize messages
@@ -590,6 +613,8 @@ class BrowserCompatibleChatWrapper(ChatOpenRouter):
     """
 
     def __init__(self, *args, **kwargs):
+        if not BROWSER_USE_AVAILABLE:
+            _raise_browser_use_unavailable()
         turn_off_logging()
         # Create the underlying LiteLLM wrapper
         self._wrapper = LiteLLMChatWrapper(*args, **kwargs)
@@ -720,6 +745,14 @@ class LocalSentenceTransformerWrapper(Embeddings):
             "model_kwargs",
         }
         st_kwargs = {k: v for k, v in (kwargs or {}).items() if k in st_allowed_keys}
+        if "cache_folder" not in st_kwargs:
+            cache_folder = (
+                os.getenv("SENTENCE_TRANSFORMERS_HOME")
+                or os.getenv("HF_HOME")
+                or ""
+            ).strip()
+            if cache_folder:
+                st_kwargs["cache_folder"] = cache_folder
 
         self.model = SentenceTransformer(model, **st_kwargs)
         self.model_name = model
@@ -771,6 +804,8 @@ def _get_litellm_embedding(
     model_config: Optional[ModelConfig] = None,
     **kwargs: Any,
 ):
+    # use api key from kwargs or env
+    api_key = kwargs.pop("api_key", None) or get_api_key(provider_name)
     # Check if this is a local sentence-transformers model
     if provider_name == "huggingface" and model_name.startswith(
         "sentence-transformers/"
@@ -785,9 +820,6 @@ def _get_litellm_embedding(
             model_config=model_config,
             **kwargs,
         )
-
-    # use api key from kwargs or env
-    api_key = kwargs.pop("api_key", None) or get_api_key(provider_name)
 
     # Only pass API key if key is not a placeholder
     if api_key and api_key not in ("None", "NA"):
@@ -905,6 +937,8 @@ def get_chat_model(
 def get_browser_model(
     provider: str, name: str, model_config: Optional[ModelConfig] = None, **kwargs: Any
 ) -> BrowserCompatibleChatWrapper:
+    if not BROWSER_USE_AVAILABLE:
+        _raise_browser_use_unavailable()
     orig = provider.lower()
     provider_name, kwargs = _merge_provider_defaults("chat", orig, kwargs)
     return _get_litellm_chat(
