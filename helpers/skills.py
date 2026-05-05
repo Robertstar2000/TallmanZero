@@ -17,6 +17,10 @@ except Exception:  # pragma: no cover
     yaml = None  # type: ignore
 
 
+# Agent.data key used by the legacy explicit skill-loading flow.
+AGENT_DATA_NAME_LOADED_SKILLS = "loaded_skills"
+
+
 @dataclass(slots=True)
 class Skill:
     name: str

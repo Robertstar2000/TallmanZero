@@ -1,121 +1,134 @@
+version: "3.8"
+
 # =============================================================================
 # TallmanZero - Docker Swarm Production Configuration
 # =============================================================================
-# Deploys the hardened Tallman Zero agent to the Docker Swarm cluster.
+# This stack exposes AgentZero through Traefik on:
+#   - https://agent.tallmanequipment.com
+#   - https://agent.tallmanequipment.com:3190
 #
-# Deployment:
-#   1. Copy to /var/data/config/docker-compose-agentzero.yaml
-#   2. Create data dirs: mkdir -p /var/data/agent_zero_data/{chats,memory,projects,workdir,knowledge,logs}
-#   3. Deploy: make deploy STACK=agentzero
-#   4. DNS: agent.tallmanequipment.com -> 10.10.20.65
-#
-# Management:
-#   - Update: make update STACK=agentzero
-#   - Remove: make destroy STACK=agentzero
-#   - Logs:   docker service logs agentzero_agent-zero
+# Important:
+#   The AgentZero container currently listens internally on port 80.
+#   Traefik routes public traffic to that internal container port.
 # =============================================================================
 
 networks:
-  # Shared Traefik network - must be external so Traefik (infra stack) can reach this service
   traefik:
     external: true
     name: infra_traefik
 
-  # Internal network for inter-container communication
-  agentzero_internal:
-    driver: overlay
-    attachable: true
-
 services:
   agent-zero:
-    # Custom hardened Tallman Zero image from Docker Hub
     image: tallmanit/tallmanswarm:AppTallmanZero3.1
 
-    # Network Configuration (Dual-Network Architecture)
     networks:
-      - traefik           # External infra_traefik - Traefik routes via this
-      - agentzero_internal  # For internal services
+      - traefik
 
-    # Persistent Volume Mounts (NFS shared storage on 10.10.20.64)
-    # Only user data directories are mounted to preserve the baked-in
-    # application code, plugins, and hardened UI inside the container.
     volumes:
-      - /var/data/agent_zero_data/chats:/a0/usr/chats
-      - /var/data/agent_zero_data/memory:/a0/usr/memory
-      - /var/data/agent_zero_data/projects:/a0/usr/projects
-      - /var/data/agent_zero_data/workdir:/a0/usr/workdir
-      - /var/data/agent_zero_data/knowledge:/a0/knowledge
-      - /var/data/agent_zero_data/logs:/a0/logs
+      - /var/data/agentzero/chats:/a0/usr/chats
+      - /var/data/agentzero/memory:/a0/usr/memory
+      - /var/data/agentzero/projects:/a0/usr/projects
+      - /var/data/agentzero/workdir:/a0/usr/workdir
+      - /var/data/agentzero/knowledge:/a0/knowledge
+      - /var/data/agentzero/logs:/a0/logs
 
-    # Environment Configuration
     environment:
-      - TZ=America/New_York
-      - ALLOWED_ORIGINS=https://agent.tallmanequipment.com,https://agent.tallmanequipment.com:*
+      TZ: America/New_York
+      ALLOWED_ORIGINS: "https://agent.tallmanequipment.com,https://agent.tallmanequipment.com:3190,https://agent.tallmanequipment.com:*"
 
-    # Swarm Deployment Configuration
     deploy:
       mode: replicated
       replicas: 1
 
-      # Rolling Update Strategy
       update_config:
         parallelism: 1
         delay: 30s
         failure_action: rollback
         monitor: 60s
-        order: start-first
+        order: stop-first
 
-      # Rollback Configuration
       rollback_config:
         parallelism: 1
         delay: 10s
+        failure_action: pause
+        monitor: 60s
+        order: stop-first
 
-      # Restart Policy
       restart_policy:
         condition: on-failure
         delay: 10s
         max_attempts: 5
         window: 120s
 
-      # Resource Limits
       resources:
         limits:
           memory: 4G
-          cpus: '2.0'
+          cpus: "2.0"
         reservations:
           memory: 1G
-          cpus: '0.5'
+          cpus: "0.5"
 
-      # Placement Constraints
       placement:
         constraints:
           - node.role == manager
 
-      # Traefik Labels for Automatic Routing
       labels:
-        # Enable Traefik routing
         - "traefik.enable=true"
 
-        # Router Configuration
+        # ---------------------------------------------------------------------
+        # Standard HTTPS route:
+        #   https://agent.tallmanequipment.com
+        # ---------------------------------------------------------------------
         - "traefik.http.routers.agentzero.rule=Host(`agent.tallmanequipment.com`)"
         - "traefik.http.routers.agentzero.entrypoints=https"
+        - "traefik.http.routers.agentzero.tls=true"
         - "traefik.http.routers.agentzero.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.agentzero.service=agentzero"
 
-        # Service Configuration
-        - "traefik.http.services.agentzero.loadbalancer.server.port=3190"
+        # ---------------------------------------------------------------------
+        # Optional HTTPS route on public port 3190:
+        #   https://agent.tallmanequipment.com:3190
+        #
+        # This requires Traefik to have an entrypoint named web3190.
+        # See Traefik changes below.
+        # ---------------------------------------------------------------------
+        - "traefik.http.routers.agentzero-3190.rule=Host(`agent.tallmanequipment.com`)"
+        - "traefik.http.routers.agentzero-3190.entrypoints=web3190"
+        - "traefik.http.routers.agentzero-3190.tls=true"
+        - "traefik.http.routers.agentzero-3190.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.agentzero-3190.service=agentzero"
+
+        # ---------------------------------------------------------------------
+        # AgentZero service target.
+        #
+        # This is the internal container port.
+        # Keep this at 80 because the container logs show:
+        #   Uvicorn running on http://0.0.0.0:80
+        # ---------------------------------------------------------------------
+        - "traefik.http.services.agentzero.loadbalancer.server.port=80"
+
+        # Sticky session.
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie=true"
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie.name=agentzero_session"
 
-        # Network for Traefik Communication (must match the external infra_traefik network)
+        # Traefik overlay network.
         - "traefik.swarm.network=infra_traefik"
 
-        # Health Check
-        - "traefik.http.services.agentzero.loadbalancer.healthcheck.path=/"
+        # Traefik-side health check.
+        # Use the dedicated health endpoint so auth redirects do not poison liveness.
+        - "traefik.http.services.agentzero.loadbalancer.healthcheck.path=/api/health"
         - "traefik.http.services.agentzero.loadbalancer.healthcheck.interval=30s"
+        - "traefik.http.services.agentzero.loadbalancer.healthcheck.timeout=10s"
 
-    # Container Health Check
+    # Container-side health check.
+    # This checks inside the AgentZero container, so it must use port 80.
+    # Probe the dedicated health endpoint instead of `/`, which may redirect.
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3190/" ]
+      test:
+        [
+          "CMD-SHELL",
+          "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/api/health', timeout=5)\""
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

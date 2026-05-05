@@ -1,6 +1,5 @@
 from helpers.extension import Extension
 from helpers import skills
-from tools.skills_tool import DATA_NAME_LOADED_SKILLS
 from agent import LoopData
 
 
@@ -12,7 +11,7 @@ class IncludeLoadedSkills(Extension):
         extras = loop_data.extras_persistent
 
         # Get loaded skills names
-        skill_names = self.agent.data.get(DATA_NAME_LOADED_SKILLS)
+        skill_names = self.agent.data.get(skills.AGENT_DATA_NAME_LOADED_SKILLS)
         if not skill_names:
             return
 

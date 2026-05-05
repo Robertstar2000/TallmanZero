@@ -62,6 +62,31 @@ browser_use_monkeypatch.apply()
 litellm.modify_params = True # helps fix anthropic tool calls by browser-use
 litellm.drop_params = True  # Drop unsupported params for GPT-5 compatibility
 
+try:
+    from browser_use.llm import (
+        ChatOllama,
+        ChatOpenRouter,
+        ChatGoogle,
+        ChatAnthropic,
+        ChatGroq,
+        ChatOpenAI,
+    )
+    BROWSER_USE_AVAILABLE = True
+    BROWSER_USE_IMPORT_ERROR: Exception | None = None
+except Exception as exc:
+    BROWSER_USE_AVAILABLE = False
+    BROWSER_USE_IMPORT_ERROR = exc
+
+    class _BrowserUseUnavailable:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            raise ModuleNotFoundError(
+                "browser_use is not installed in this runtime"
+            ) from BROWSER_USE_IMPORT_ERROR
+
+    ChatOllama = (  # type: ignore[assignment]
+        ChatOpenRouter
+    ) = ChatGoogle = ChatAnthropic = ChatGroq = ChatOpenAI = _BrowserUseUnavailable
+
 class ModelType(Enum):
     CHAT = "Chat"
     EMBEDDING = "Embedding"
@@ -584,8 +609,6 @@ class AsyncAIChatReplacement:
         self.chat = AsyncAIChatReplacement._Chat(wrapper)
 
 
-from browser_use.llm import ChatOllama, ChatOpenRouter, ChatGoogle, ChatAnthropic, ChatGroq, ChatOpenAI
-
 class BrowserCompatibleChatWrapper(ChatOpenRouter):
     """
     A wrapper for browser agent that can filter/sanitize messages
@@ -593,6 +616,10 @@ class BrowserCompatibleChatWrapper(ChatOpenRouter):
     """
 
     def __init__(self, *args, **kwargs):
+        if not BROWSER_USE_AVAILABLE:
+            raise ModuleNotFoundError(
+                "browser_use is not installed in this runtime"
+            ) from BROWSER_USE_IMPORT_ERROR
         turn_off_logging()
         # Create the underlying LiteLLM wrapper
         self._wrapper = LiteLLMChatWrapper(*args, **kwargs)
@@ -907,6 +934,10 @@ def get_chat_model(
 def get_browser_model(
     provider: str, name: str, model_config: Optional[ModelConfig] = None, **kwargs: Any
 ) -> BrowserCompatibleChatWrapper:
+    if not BROWSER_USE_AVAILABLE:
+        raise ModuleNotFoundError(
+            "browser_use is not installed in this runtime"
+        ) from BROWSER_USE_IMPORT_ERROR
     orig = provider.lower()
     provider_name, kwargs = _merge_provider_defaults("chat", orig, kwargs)
     return _get_litellm_chat(

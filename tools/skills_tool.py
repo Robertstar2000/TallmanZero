@@ -9,7 +9,11 @@ from helpers import skills as skills_helper, runtime
 from helpers.print_style import PrintStyle
 
 
-DATA_NAME_LOADED_SKILLS = "loaded_skills"
+DATA_NAME_LOADED_SKILLS = getattr(
+    skills_helper,
+    "AGENT_DATA_NAME_LOADED_SKILLS",
+    "loaded_skills",
+)
 
 
 class SkillsTool(Tool):
