@@ -23,8 +23,8 @@ Expected swarm characteristics:
 - Image is pulled from a registry; swarm does not build `Dockerfile.tallman`
 - Current published tag: `tallmanit/tallmanswarm:AppTallmanZero5.0`
 - Published host port is `3190`
-- Internal container port remains `80`
-- Traefik must route to service port `80`
+- Internal container port remains `3190`
+- Traefik must route to service port `3190`
 - Health checks should use `/api/health` instead of `/`
 
 If Ollama is the primary provider and OpenRouter is the fallback, the runtime must also have an OpenRouter API key available:

@@ -55,7 +55,7 @@ services:
         - "traefik.http.routers.agentzero.tls.certresolver=letsencrypt"
         
         # Internal application port routing
-        - "traefik.http.services.agentzero.loadbalancer.server.port=80"
+        - "traefik.http.services.agentzero.loadbalancer.server.port=3190"
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie=true"
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie.name=agentzero_session"
         
@@ -69,7 +69,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/api/health', timeout=5)\""
+          "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:3190/api/health', timeout=5)\""
         ]
       interval: 30s
       timeout: 10s

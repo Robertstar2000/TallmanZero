@@ -74,7 +74,7 @@ docker run -p 80:80 agent0ai/agent-zero
 ```bash
 docker stack deploy -c docker-compose-swarm.yml agentzero
 ```
-The swarm stack in [`docker-compose-swarm.yml`](./docker-compose-swarm.yml) is intended for published images such as `tallmanit/tallmanswarm:AppTallmanZero5.0`. It publishes host port `3190` while routing Traefik to the container's internal port `80`.
+The swarm stack in [`docker-compose-swarm.yml`](./docker-compose-swarm.yml) is intended for published images such as `tallmanit/tallmanswarm:AppTallmanZero5.0`. It publishes host port `3190` while routing Traefik to the container's internal port `3190`.
 
 A detailed setup guide for Windows, macOS, and Linux can be found in the Agent Zero Documentation at [this page](./docs/setup/installation.md).
 

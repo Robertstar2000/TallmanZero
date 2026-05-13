@@ -7,9 +7,9 @@
 #   - Traefik HTTPS routing for agent.tallmanequipment.com
 #
 # Important:
-#   The published image still serves internally on port 80.
-#   Swarm publishes host port 3190 -> container port 80.
-#   Traefik must target container port 80, not 3190.
+#   The published image serves internally on port 3190.
+#   Swarm publishes host port 3190 -> container port 3190.
+#   Traefik must target container port 3190.
 # =============================================================================
 
 networks:
@@ -22,7 +22,7 @@ services:
     image: tallmanit/tallmanswarm:AppTallmanZero5.0
 
     ports:
-      - target: 80
+      - target: 3190
         published: 3190
         protocol: tcp
         mode: ingress
@@ -103,8 +103,8 @@ services:
         - "traefik.http.routers.agentzero-3190.service=agentzero"
 
         # ---------------------------------------------------------------------
-        # AgentZero service target: internal container port 80.
-        - "traefik.http.services.agentzero.loadbalancer.server.port=80"
+        # AgentZero service target: internal container port 3190.
+        - "traefik.http.services.agentzero.loadbalancer.server.port=3190"
 
         # Sticky session.
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie=true"
@@ -119,12 +119,12 @@ services:
         - "traefik.http.services.agentzero.loadbalancer.healthcheck.interval=30s"
         - "traefik.http.services.agentzero.loadbalancer.healthcheck.timeout=10s"
 
-    # Container-side health check: must probe internal port 80.
+    # Container-side health check: must probe internal port 3190.
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/api/health', timeout=5)\""
+          "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:3190/api/health', timeout=5)\""
         ]
       interval: 30s
       timeout: 10s

@@ -131,8 +131,8 @@ docker stack deploy -c docker-compose-swarm.yml agentzero
 Notes:
 - `docker-compose-swarm.yml` is for **published images only**. Swarm does not build local Dockerfiles during `docker stack deploy`.
 - The current TallmanZero swarm image is `tallmanit/tallmanswarm:AppTallmanZero5.0`.
-- The stack publishes **host port `3190`** through Swarm ingress, but the container itself still listens on **port `80`**.
-- Traefik must therefore target container port `80`.
+- The stack publishes **host port `3190`** through Swarm ingress, and the container itself listens on **port `3190`**.
+- Traefik must therefore target container port `3190`.
 - If you want OpenRouter available as a runtime fallback when Ollama is unreachable, export `API_KEY_OPENROUTER` before deployment or inject it as a Swarm secret/environment variable.
 
 Example:
