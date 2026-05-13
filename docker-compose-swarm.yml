@@ -1,15 +1,15 @@
-version: "3.8"
-
 # =============================================================================
 # TallmanZero - Docker Swarm Production Configuration
 # =============================================================================
-# This stack exposes AgentZero through Traefik on:
-#   - https://agent.tallmanequipment.com
-#   - https://agent.tallmanequipment.com:3190
+# This stack deploys the published TallmanZero image to Docker Swarm.
+# It exposes Agent Zero through:
+#   - direct Swarm ingress on published port 3190
+#   - Traefik HTTPS routing for agent.tallmanequipment.com
 #
 # Important:
-#   The AgentZero container currently listens internally on port 80.
-#   Traefik routes public traffic to that internal container port.
+#   The published image still serves internally on port 80.
+#   Swarm publishes host port 3190 -> container port 80.
+#   Traefik must target container port 80, not 3190.
 # =============================================================================
 
 networks:
@@ -19,22 +19,31 @@ networks:
 
 services:
   agent-zero:
-    image: tallmanit/tallmanswarm:AppTallmanZero3.1
+    image: tallmanit/tallmanswarm:AppTallmanZero5.0
+
+    ports:
+      - target: 80
+        published: 3190
+        protocol: tcp
+        mode: ingress
 
     networks:
       - traefik
 
     volumes:
-      - /var/data/agentzero/chats:/a0/usr/chats
-      - /var/data/agentzero/memory:/a0/usr/memory
-      - /var/data/agentzero/projects:/a0/usr/projects
-      - /var/data/agentzero/workdir:/a0/usr/workdir
-      - /var/data/agentzero/knowledge:/a0/knowledge
-      - /var/data/agentzero/logs:/a0/logs
+      # Runtime/user data only. Do not mount /a0, /a0/helpers, /a0/tools, or /a0/extensions.
+      - /var/data/agent_zero_data/chats:/a0/usr/chats
+      - /var/data/agent_zero_data/memory:/a0/usr/memory
+      - /var/data/agent_zero_data/projects:/a0/usr/projects
+      - /var/data/agent_zero_data/workdir:/a0/usr/workdir
+      - /var/data/agent_zero_data/knowledge:/a0/knowledge
+      - /var/data/agent_zero_data/logs:/a0/logs
 
     environment:
       TZ: America/New_York
-      ALLOWED_ORIGINS: "https://agent.tallmanequipment.com,https://agent.tallmanequipment.com:3190,https://agent.tallmanequipment.com:*"
+      ALLOWED_ORIGINS: "https://agent.tallmanequipment.com,https://agent.tallmanequipment.com:3190"
+      DEPLOYMENT_TARGET: swarm-production
+      API_KEY_OPENROUTER: "${API_KEY_OPENROUTER:-}"
 
     deploy:
       mode: replicated
@@ -85,13 +94,8 @@ services:
         - "traefik.http.routers.agentzero.tls.certresolver=letsencrypt"
         - "traefik.http.routers.agentzero.service=agentzero"
 
-        # ---------------------------------------------------------------------
-        # Optional HTTPS route on public port 3190:
-        #   https://agent.tallmanequipment.com:3190
-        #
-        # This requires Traefik to have an entrypoint named web3190.
-        # See Traefik changes below.
-        # ---------------------------------------------------------------------
+        # Optional HTTPS route on public port 3190.
+        # This requires Traefik to expose an entrypoint named web3190.
         - "traefik.http.routers.agentzero-3190.rule=Host(`agent.tallmanequipment.com`)"
         - "traefik.http.routers.agentzero-3190.entrypoints=web3190"
         - "traefik.http.routers.agentzero-3190.tls=true"
@@ -99,12 +103,7 @@ services:
         - "traefik.http.routers.agentzero-3190.service=agentzero"
 
         # ---------------------------------------------------------------------
-        # AgentZero service target.
-        #
-        # This is the internal container port.
-        # Keep this at 80 because the container logs show:
-        #   Uvicorn running on http://0.0.0.0:80
-        # ---------------------------------------------------------------------
+        # AgentZero service target: internal container port 80.
         - "traefik.http.services.agentzero.loadbalancer.server.port=80"
 
         # Sticky session.
@@ -120,9 +119,7 @@ services:
         - "traefik.http.services.agentzero.loadbalancer.healthcheck.interval=30s"
         - "traefik.http.services.agentzero.loadbalancer.healthcheck.timeout=10s"
 
-    # Container-side health check.
-    # This checks inside the AgentZero container, so it must use port 80.
-    # Probe the dedicated health endpoint instead of `/`, which may redirect.
+    # Container-side health check: must probe internal port 80.
     healthcheck:
       test:
         [

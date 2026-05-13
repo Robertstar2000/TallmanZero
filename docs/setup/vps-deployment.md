@@ -120,6 +120,28 @@ docker run hello-world
 
 ## Agent Zero Container Deployment
 
+### Docker Swarm with Traefik
+
+If you are deploying a published TallmanZero image to Docker Swarm instead of running a single `docker run` container, use the stack file in the repository root:
+
+```bash
+docker stack deploy -c docker-compose-swarm.yml agentzero
+```
+
+Notes:
+- `docker-compose-swarm.yml` is for **published images only**. Swarm does not build local Dockerfiles during `docker stack deploy`.
+- The current TallmanZero swarm image is `tallmanit/tallmanswarm:AppTallmanZero5.0`.
+- The stack publishes **host port `3190`** through Swarm ingress, but the container itself still listens on **port `80`**.
+- Traefik must therefore target container port `80`.
+- If you want OpenRouter available as a runtime fallback when Ollama is unreachable, export `API_KEY_OPENROUTER` before deployment or inject it as a Swarm secret/environment variable.
+
+Example:
+
+```bash
+export API_KEY_OPENROUTER='your-openrouter-key'
+docker stack deploy -c docker-compose-swarm.yml agentzero
+```
+
 ### Step 1: Create Directory Structure
 
 ```bash

@@ -11,6 +11,31 @@ docker run -p 50001:80 agent0ai/agent-zero
 
 The web UI is then accessible at `http://localhost:50001`. The container exposes port 80 internally; map any host port to it.
 
+## Docker Swarm Deployment (TallmanZero)
+
+For Tallman-style swarm deployments, use the published image stack file in the repository root:
+
+```bash
+docker stack deploy -c docker-compose-swarm.yml agentzero
+```
+
+Expected swarm characteristics:
+- Image is pulled from a registry; swarm does not build `Dockerfile.tallman`
+- Current published tag: `tallmanit/tallmanswarm:AppTallmanZero5.0`
+- Published host port is `3190`
+- Internal container port remains `80`
+- Traefik must route to service port `80`
+- Health checks should use `/api/health` instead of `/`
+
+If Ollama is the primary provider and OpenRouter is the fallback, the runtime must also have an OpenRouter API key available:
+
+```bash
+export API_KEY_OPENROUTER='your-openrouter-key'
+docker stack deploy -c docker-compose-swarm.yml agentzero
+```
+
+For this repository's swarm stack, persistent paths are mounted from `/var/data/agent_zero_data/...` into `/a0/usr`, `/a0/knowledge`, and `/a0/logs`.
+
 ## Persistence
 
 All user data lives in `/a0/usr/` inside the container. Without a volume mount, data is lost when the container is removed.

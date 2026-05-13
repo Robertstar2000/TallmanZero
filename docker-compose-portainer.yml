@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   # Shared Traefik network (external - owned by the infra stack)
   traefik:
@@ -13,20 +11,21 @@ networks:
 
 services:
   agent-zero:
-    image: tallmanit/tallmanswarm:AppTallmanZero3.1
+    image: tallmanit/tallmanswarm:AppTallmanZero5.0
     networks:
       - traefik           # External infra_traefik - Traefik routes via this
       - agentzero_internal
     volumes:
-      # Primary data volume
-      - /var/data/agent_zero_data:/a0
-      # Mount web files for hot-reloading / easier testing
-      - /var/data/agent_zero_data/webui:/a0/webui
-      # Mount knowledge files
+      # Runtime/user data only. Do not mount /a0, /a0/helpers, /a0/tools, or /a0/extensions.
+      - /var/data/agent_zero_data/chats:/a0/usr/chats
+      - /var/data/agent_zero_data/memory:/a0/usr/memory
+      - /var/data/agent_zero_data/projects:/a0/usr/projects
+      - /var/data/agent_zero_data/workdir:/a0/usr/workdir
       - /var/data/agent_zero_data/knowledge:/a0/knowledge
+      - /var/data/agent_zero_data/logs:/a0/logs
     environment:
       - TZ=America/New_York
-      - ALLOWED_ORIGINS=https://agent.tallmanequipment.com,https://agent.tallmanequipment.com:*
+      - ALLOWED_ORIGINS=https://agent.tallmanequipment.com,https://agent.tallmanequipment.com:3190
       # Connect to the local Ollama LLM
       - OLLAMA_API_BASE=http://10.10.20.60:11434
     deploy:
@@ -56,7 +55,7 @@ services:
         - "traefik.http.routers.agentzero.tls.certresolver=letsencrypt"
         
         # Internal application port routing
-        - "traefik.http.services.agentzero.loadbalancer.server.port=3190"
+        - "traefik.http.services.agentzero.loadbalancer.server.port=80"
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie=true"
         - "traefik.http.services.agentzero.loadbalancer.sticky.cookie.name=agentzero_session"
         
@@ -67,7 +66,11 @@ services:
         - "traefik.swarm.network=infra_traefik"
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3190/"]
+      test:
+        [
+          "CMD-SHELL",
+          "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/api/health', timeout=5)\""
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

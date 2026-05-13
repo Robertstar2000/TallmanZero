@@ -12,8 +12,10 @@ COPY ./webui /a0/webui
 
 # Copy updated Backend Code
 COPY ./api /a0/api
+COPY ./extensions /a0/extensions
 COPY ./helpers /a0/helpers
 COPY ./plugins /a0/plugins
+COPY ./tools /a0/tools
 COPY ./agent.py /a0/agent.py
 COPY ./models.py /a0/models.py
 COPY ./initialize.py /a0/initialize.py
